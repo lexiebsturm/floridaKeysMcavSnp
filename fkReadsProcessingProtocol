@@ -1,0 +1,11 @@
+###FK MCAV Reads Processing Protocol
+
+##Downloading Reads from Basespace
+#Go to the bin on your local drive
+
+cd ~/bin
+brew tap basespace/basespace && brew install bs-cli #Use homebrew to install the basespace command line downloader
+bs auth #Should generate a link to authenticate the usage, go to the link in your browser
+bs download project --name JA20179 -o asturm2017@koko-login.hpc.fau.edu:~/2bRAD/floridaKeys/rawReads #--name is the project name and -o is the output directory, in this case uploading the reads directly to koko
+
+# bs download project --name JA20179 -o /Users/student/Documents/Florida\ Keys/rawReads #Or download to s home directory
