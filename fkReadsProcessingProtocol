@@ -9,3 +9,62 @@ bs auth #Should generate a link to authenticate the usage, go to the link in you
 bs download project --name JA20179 -o asturm2017@koko-login.hpc.fau.edu:~/2bRAD/floridaKeys/rawReads #--name is the project name and -o is the output directory, in this case uploading the reads directly to koko
 
 # bs download project --name JA20179 -o /Users/student/Documents/Florida\ Keys/rawReads #Or download to s home directory
+
+cd ~/2bRAD/floridaKeys/rawReads #There should be 50 files
+
+################################################################################
+
+mkdir concatReads #Make a new directory where you can concatenate your reads between the two lanes.
+srun cp ./rawReads/*.fastq.gz ./concatReads
+cd concatReads
+gunzip *.fastq.gz #unzip all of your files
+
+nano concat.sh #See script below, concatenate all of your files across lanes
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+
+cat 10_S38_L001_R1_001.fastq 10_S38_L002_R1_001.fastq > fk10.fq
+cat 11_S39_L001_R1_001.fastq 11_S39_L002_R1_001.fastq > fk11.fq
+cat 12_S40_L001_R1_001.fastq 12_S40_L002_R1_001.fastq > fk12.fq
+cat 13_S41_L001_R1_001.fastq 13_S41_L002_R1_001.fastq > fk13.fq
+cat 14_S42_L001_R1_001.fastq 14_S42_L002_R1_001.fastq > fk14.fq
+cat 15_S43_L001_R1_001.fastq 15_S43_L002_R1_001.fastq > fk15.fq
+cat 16_S44_L001_R1_001.fastq 16_S44_L002_R1_001.fastq > fk16.fq
+cat 17_S45_L001_R1_001.fastq 17_S45_L002_R1_001.fastq > fk17.fq
+cat 18_S46_L001_R1_001.fastq 18_S46_L002_R1_001.fastq > fk18.fq
+cat 19_S47_L001_R1_001.fastq 19_S47_L002_R1_001.fastq > fk19.fq
+cat 1_S29_L001_R1_001.fastq 1_S29_L002_R1_001.fastq > fk1.fq
+cat 20_S48_L001_R1_001.fastq 20_S48_L002_R1_001.fastq > fk20.fq
+cat 21_S49_L001_R1_001.fastq 21_S49_L002_R1_001.fastq > fk21.fq
+cat 22_S50_L001_R1_001.fastq 22_S50_L002_R1_001.fastq > fk22.fq
+cat 23_S51_L001_R1_001.fastq 23_S51_L002_R1_001.fastq > fk23.fq
+cat 24_S52_L001_R1_001.fastq 24_S52_L002_R1_001.fastq > fk24.fq
+cat 25_S53_L001_R1_001.fastq 25_S53_L002_R1_001.fastq > fk25.fq
+cat 2_S30_L001_R1_001.fastq 2_S30_L002_R1_001.fastq > fk2.fq
+cat 3_S31_L001_R1_001.fastq 3_S31_L002_R1_001.fastq > fk3.fq
+cat 4_S32_L001_R1_001.fastq 4_S32_L002_R1_001.fastq > fk4.fq
+cat 5_S33_L001_R1_001.fastq 5_S33_L002_R1_001.fastq > fk5.fq
+cat 6_S34_L001_R1_001.fastq 6_S34_L002_R1_001.fastq > fk6.fq
+cat 7_S35_L001_R1_001.fastq 7_S35_L002_R1_001.fastq > fk7.fq
+cat 8_S36_L001_R1_001.fastq 8_S36_L002_R1_001.fastq > fk8.fq
+cat 9_S37_L001_R1_001.fastq 9_S37_L002_R1_001.fastq > fk9.fq
+
+################################################################################
+mkdir trimmedReads
+srun cp ./concatReads/*.fq ./trimmedReads
+
+#Set up a script to trim and deduplicate the files
+2bRAD_trim_launch_dedup.pl fq > trims #Trim and deduplicate files
+launcher_creator.py -j trims -n trims -t 2:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch trims2.slurm
+
+################################################################################
+mkdir renamedReads
+srun cp ./trimmedReads/*.tr0 ./renamedReads
+
+#Create and scp a csv file with a column of file names (as deduplicated with the in-line barcodes) and what you want to rename the filed to (sample ID #). Upload the csv to the working directory and copy the sampleRename.py script 
