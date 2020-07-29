@@ -1,0 +1,38 @@
+---
+title: "Population genetic structure of shallow and mesophotic *Montastraea cavernosa* in the Florida Keys"
+author: "Alexis Sturm -- lexie.sturm@gmail.com and Ryan Eckert-- ryan.j.eckert@gmail.com"
+date: "7/29/2020"
+output:
+  html_document:
+    theme: flatly
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.align = 'left')
+knitr::opts_knit$set(root.dir = '../data')
+options(width = 88, scipen = 4)
+```
+
+***
+
+# About this document
+***  
+All analyses were performed in R version 3.6.2. 
+This is the code that accompanies the publication XXX. Here you will find all the code to repeat the statistical analyses performed in R and the figures created for the manuscript. The accompanying library preparation protocol and bioinformatic walkthrough can be found by clicking on the links.
+
+If you have any issues or questions about the code please feel free to send an email to lexie.sturm@gmail.com.
+
+***
+
+# Basic setup of R environment
+***
+## Loading required packages
+Make sure to set the working directory: 
+`setwd("~/path/to/directory/with/data")`
+
+```{r, set working directory}
+setwd("/Users/student/Documents/GitHub/floridaKeysMcavSnp/data")
+```

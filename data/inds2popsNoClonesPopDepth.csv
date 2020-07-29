@@ -1,0 +1,216 @@
+﻿sample,popdepth
+2,TER-North-Mesophotic
+4,TER-North-Mesophotic
+5,TER-North-Mesophotic
+6,TER-North-Mesophotic
+7,TER-North-Mesophotic
+8,TER-North-Mesophotic
+9,TER-North-Mesophotic
+10,TER-North-Mesophotic
+12,TER-North-Mesophotic
+13,TER-North-Mesophotic
+14,TER-North-Shallow
+15,TER-North-Shallow
+16,TER-North-Shallow
+17,TER-North-Shallow
+18,TER-North-Shallow
+19,TER-North-Shallow
+20,TER-North-Shallow
+21,TER-North-Shallow
+22,TER-North-Shallow
+23,TER-North-Shallow
+24,TER-North-Shallow
+26,TER-North-Shallow
+27,TER-North-Shallow
+28,TER-North-Shallow
+29,TER-North-Shallow
+30,TER-North-Shallow
+31,TER-North-Shallow
+32,TER-North-Shallow
+33,TER-North-Shallow
+34,TER-North-Shallow
+36,TER-North-Shallow
+37,TER-North-Mesophotic
+38,TER-North-Mesophotic
+39,TER-North-Mesophotic
+40,TER-North-Mesophotic
+41,TER-North-Mesophotic
+42,TER-North-Mesophotic
+44,TER-North-Mesophotic
+45,TER-North-Mesophotic
+46,TER-North-Mesophotic
+47,TER-North-Mesophotic
+48,TER-North-Shallow
+49,TER-North-Shallow
+50,TER-North-Shallow
+52,TER-North-Shallow
+53,TER-North-Shallow
+54,TER-North-Mesophotic
+55,TER-North-Mesophotic
+56,TER-North-Mesophotic
+60,TER-North-Shallow
+61,TER-South-Mesophotic
+62,TER-South-Mesophotic
+63,TER-South-Mesophotic
+64,TER-South-Mesophotic
+65,TER-South-Mesophotic
+66,TER-South-Mesophotic
+67,TER-South-Mesophotic
+68,TER-South-Mesophotic
+69,TER-South-Mesophotic
+70,TER-South-Mesophotic
+71,TER-South-Mesophotic
+72,TER-South-Mesophotic
+73,TER-South-Mesophotic
+74,TER-South-Mesophotic
+75,TER-South-Mesophotic
+76,TER-South-Mesophotic
+77,TER-South-Mesophotic
+78,TER-South-Mesophotic
+79,TER-South-Mesophotic
+80,TER-South-Mesophotic
+82,TER-South-Shallow
+84,TER-South-Shallow
+85,TER-South-Shallow
+86,TER-South-Shallow
+87,TER-South-Shallow
+88,TER-South-Shallow
+89,TER-South-Shallow
+90,TER-South-Shallow
+91,TER-South-Shallow
+92,TER-South-Shallow
+93,TER-South-Shallow
+94,TER-South-Shallow
+95,TER-South-Shallow
+96,TER-South-Shallow
+97,TER-South-Shallow
+98,TER-South-Shallow
+99,TER-South-Shallow
+100,TER-South-Shallow
+101,TER-South-Shallow
+102,TER-South-Shallow
+103,TER-South-Shallow
+104,TER-South-Shallow
+105,TER-South-Shallow
+106,TER-South-Shallow
+107,TER-South-Mesophotic
+108,TER-South-Mesophotic
+109,TER-South-Mesophotic
+110,TER-South-Mesophotic
+111,TER-South-Mesophotic
+112,TER-South-Mesophotic
+113,TER-South-Mesophotic
+114,TER-South-Mesophotic
+115,TER-South-Mesophotic
+116,TER-South-Mesophotic
+117,TER-South-Mesophotic
+118,TER-South-Shallow
+119,TER-South-Shallow
+120,TER-South-Shallow
+121,TER-South-Shallow
+122,TER-South-Mesophotic
+123,TER-South-Mesophotic
+124,TER-South-Mesophotic
+125,TER-South-Mesophotic
+126,TER-South-Mesophotic
+127,TER-South-Mesophotic
+128,Lower Keys-Shallow
+129,Lower Keys-Shallow
+130,Lower Keys-Shallow
+131,Lower Keys-Shallow
+132,Lower Keys-Shallow
+133,Lower Keys-Shallow
+134,Lower Keys-Shallow
+135,Lower Keys-Shallow
+136,Lower Keys-Shallow
+137,Lower Keys-Shallow
+138,Lower Keys-Shallow
+139,Lower Keys-Shallow
+140,Lower Keys-Shallow
+141,Lower Keys-Shallow
+142,Lower Keys-Shallow
+143,Lower Keys-Shallow
+144,Lower Keys-Shallow
+145,Lower Keys-Shallow
+146,Lower Keys-Shallow
+147,Lower Keys-Shallow
+148,Lower Keys-Shallow
+149,Lower Keys-Shallow
+150,Lower Keys-Shallow
+151,Lower Keys-Shallow
+152,Lower Keys-Shallow
+153,Lower Keys-Shallow
+154,Lower Keys-Shallow
+155,Lower Keys-Shallow
+156,Lower Keys-Shallow
+157,Lower Keys-Mesophotic
+158,Lower Keys-Mesophotic
+159,Lower Keys-Mesophotic
+160,Lower Keys-Mesophotic
+161,Lower Keys-Mesophotic
+162,Lower Keys-Mesophotic
+163,Lower Keys-Mesophotic
+164,Lower Keys-Mesophotic
+165,Lower Keys-Mesophotic
+166,Lower Keys-Mesophotic
+167,Lower Keys-Mesophotic
+168,Lower Keys-Mesophotic
+169,Lower Keys-Mesophotic
+170,Lower Keys-Shallow
+171,Upper Keys-Mesophotic
+172,Upper Keys-Mesophotic
+173,Upper Keys-Mesophotic
+174,Upper Keys-Mesophotic
+175,Upper Keys-Mesophotic
+176,Upper Keys-Mesophotic
+177,Upper Keys-Mesophotic
+178,Upper Keys-Mesophotic
+179,Upper Keys-Shallow
+180,Upper Keys-Shallow
+181,Upper Keys-Shallow
+182,Upper Keys-Shallow
+183,Upper Keys-Shallow
+184,Upper Keys-Shallow
+185,Upper Keys-Shallow
+186,Upper Keys-Shallow
+187,Upper Keys-Mesophotic
+188,Upper Keys-Mesophotic
+189,Upper Keys-Mesophotic
+190,Upper Keys-Mesophotic
+191,Upper Keys-Mesophotic
+192,Upper Keys-Mesophotic
+193,Upper Keys-Mesophotic
+194,Upper Keys-Shallow
+195,Upper Keys-Shallow
+196,Upper Keys-Shallow
+198,Upper Keys-Shallow
+199,Upper Keys-Shallow
+200,Upper Keys-Shallow
+201,Upper Keys-Mesophotic
+202,Upper Keys-Mesophotic
+205,Upper Keys-Mesophotic
+208,Upper Keys-Mesophotic
+209,Upper Keys-Mesophotic
+211,Upper Keys-Mesophotic
+212,Upper Keys-Mesophotic
+214,Upper Keys-Mesophotic
+216,Upper Keys-Mesophotic
+217,Upper Keys-Mesophotic
+218,Upper Keys-Shallow
+219,Upper Keys-Shallow
+220,Upper Keys-Shallow
+222,Upper Keys-Shallow
+224,Upper Keys-Shallow
+225,Upper Keys-Shallow
+226,Upper Keys-Shallow
+227,Upper Keys-Shallow
+228,Upper Keys-Shallow
+229,Upper Keys-Shallow
+230,Upper Keys-Shallow
+231,Upper Keys-Shallow
+232,Upper Keys-Shallow
+233,Upper Keys-Shallow
+234,Upper Keys-Shallow
+235,Upper Keys-Shallow
+236,Upper Keys-Shallow
+237,Upper Keys-Shallow
