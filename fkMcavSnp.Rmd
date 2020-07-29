@@ -12,7 +12,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.align = 'left')
-knitr::opts_knit$set(root.dir = '../data')
+knitr::opts_knit$set(root.dir = '/Users/student/Documents/GitHub/floridaKeysMcavSnp/data')
 options(width = 88, scipen = 4)
 ```
 
@@ -34,5 +34,86 @@ Make sure to set the working directory:
 `setwd("~/path/to/directory/with/data")`
 
 ```{r, set working directory}
-setwd("/Users/student/Documents/GitHub/floridaKeysMcavSnp/data")
+setwd("../data")
+```
+
+For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
+```{r, load packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("adegenet", "dendextend", "flextable", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA")
+```
+
+# Figures and analyses
+##Dendrogram with Clones
+```{r, Dendrogram With Clones, fig.dim = c(13, 4.75)}
+cloneBams = read.table("sampleList")[,1] # list of bam files
+cloneMa = as.matrix(read.table("fkMcavClones.ibsMat")) # reads in IBS matrix produced by ANGSD
+dimnames(cloneMa) = list(cloneBams,cloneBams)
+clonesHc = hclust(as.dist(cloneMa),"ave")
+
+cloneMeta = read.csv("inds2pops.csv") # list of bams files and their populations
+clonePops = cloneMeta$pop
+cloneDepth = cloneMeta$depth
+
+cloneDend = cloneMa %>% as.dist() %>% hclust(.,"ave") %>% as.dendrogram()
+cloneDData = cloneDend %>% dendro_data()
+
+# Making the branches hang shorter so we can easily see clonal groups
+cloneDData$segments$yend2 = cloneDData$segments$yend
+for(i in 1:nrow(cloneDData$segments)) {
+  if (cloneDData$segments$yend2[i] == 0) {
+    cloneDData$segments$yend2[i] = (cloneDData$segments$y[i] - 0.03)}}
+
+cloneDendPoints = cloneDData$labels
+cloneDendPoints$pop = clonePops[order.dendrogram(cloneDend)]
+cloneDendPoints$depth=cloneDepth[order.dendrogram(cloneDend)]
+rownames(cloneDendPoints) = cloneDendPoints$label
+
+# Making points at the leaves to place symbols for populations
+point = as.vector(NA)
+for(i in 1:nrow(cloneDData$segments)) {
+  if (cloneDData$segments$yend[i] == 0) {
+    point[i] = cloneDData$segments$y[i] - 0.03
+  } else {
+    point[i] = NA}}
+
+cloneDendPoints$y = point[!is.na(point)]
+
+techReps = c("009-1", "009-2", "009-3", "159-1", "159-2", "159-3", "171-1", "171-2", "171-3")
+
+cloneDendA = ggplot() +
+  geom_segment(data = segment(cloneDData), aes(x = x, y = y, xend = xend, yend = yend2), size = 0.5) +
+  geom_point(data = cloneDendPoints, aes(x = x, y = y, fill = pop, shape = depth), size = 4, stroke = 0.25) +
+  scale_fill_brewer(palette = "Dark2", name = "Population") +
+  scale_shape_manual(values=c(25, 24))+
+  geom_hline(yintercept = 0.1, color = "red", lty = 5, size = 0.75) + # creating a dashed line to indicate a clonal distance threshold
+  geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = x, y = (y - .015), label = label), angle = 90) + # spacing technical replicates further from leaf
+  geom_text(data = subset(cloneDendPoints, subset = !label %in% techReps), aes(x = x, y = (y - .010), label = label), angle = 90) +
+  geom_text(data = subset(cloneDendPoints, subset = label %in% c("218", "223", "221", "226")), aes(x = (x + .5), y = (y - .018), label = "*"), angle = 90, size = 6) + # labeling natural clones with asterisks
+  #coord_cartesian(xlim = c(3, 84)) +
+  labs(y = "Genetic distance (1 - IBS)") +
+  guides(fill = guide_legend(override.aes = list(shape = 21)))+
+  theme_classic()
+
+cloneDend = cloneDendA + theme(
+  axis.title.x = element_blank(),
+  axis.text.x = element_blank(),
+  axis.line.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.y = element_text(size = 12, color = "black", angle = 90),
+  axis.text.y = element_text(size = 10, color = "black"),
+  axis.line.y = element_line(),
+  axis.ticks.y = element_line(),
+  panel.grid = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  plot.background = element_blank(),
+  legend.key = element_blank(),
+  legend.title = element_text(size = 12),
+  legend.text = element_text(size = 10),
+  legend.position = "left")
+
+cloneDend
+
+ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 4.75, width = 30, units = "in", dpi = 300)
 ```
