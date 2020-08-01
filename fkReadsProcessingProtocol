@@ -308,3 +308,25 @@ for K in `seq 1 11`; \
 do admixture --cv fkMcavNoClones.bed $K | tee fkMcavNoClones_${K}.out; done
 
 grep -h CV fkMcavNoClones*.out
+
+####
+CV error (K=1): 0.48446
+CV error (K=2): 0.43832
+CV error (K=3): 0.43216
+CV error (K=4): 0.43160
+CV error (K=5): 0.43222
+CV error (K=6): 0.43130
+CV error (K=7): 0.43355
+CV error (K=8): 0.44174
+CV error (K=9): 0.45271
+CV error (K=10): 0.46330
+CV error (K=11): 0.46838
+
+bcftools reheader fkMcavNoClones.vcf.gz -s sampleListNoClones -o fkMcavNoClonesRenamed.vcf.gz
+
+# LD: (use rEM for WGCNA, to look for signatures of polygenic selection):
+NS=`zcat fkMcavNoClones.geno.gz | wc -l`
+NB=`cat bamsNoClones | wc -l`
+zcat fkMcavNoClones.mafs.gz | tail -n +2 | cut -f 1,2 > mc1.sites
+module load gsl
+ngsLD --geno fkMcavNoClones.geno.gz --probs 1 --n_ind $NB --n_sites $NS --max_kb_dist 0 --pos mc1.sites --out fkMcavNoClones.LD --n_threads 12 --extend_out 1
