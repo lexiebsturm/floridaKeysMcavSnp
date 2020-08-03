@@ -178,19 +178,20 @@ snpPCoA = merge(fkSnpPcoaValues, aggregate(cbind(mean.x=PCo1,mean.y=PCo2)~popsit
 # SNP PCoA biplot
 #plotPops = c("TER-North", "TER-South", "Lower Keys", "Upper Keys")
 
+
 fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop, shape = depth, linetype = depth)) +
   geom_hline(yintercept = 0, color = "gray90", size = 0.5) +
   geom_vline(xintercept = 0, color = "gray90", size = 0.5) +
   stat_ellipse(data = subset(snpPCoA, type = "t", geom = "polygon", alpha = 0.1)) + #ellipse
   scale_linetype_manual(values=c(1,2), breaks=c("Shallow","Mesophotic"), name = "Depth Zone")+
-  geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3) + #individual's points indicated by circles
+  geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3, show.legend = FALSE, guide=FALSE) + #individual's points indicated by circles
   scale_shape_manual(values = c(25,24), breaks=c("Shallow","Mesophotic"), name = "Depth Zone") +
   geom_point(aes(x = mean.x, y = mean.y, shape = depth), size = 5, color = "black") + #population centroids indicated by triangles
   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population")+
-  scale_color_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name = " Population") +
+  scale_color_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name = " Population", guide=FALSE) +
   xlab(paste ("PCo 1 (", fkSnpPcoaVar[1],"%)", sep = "")) + #Prints percent variation explained by first axis
   ylab(paste ("PCo 2 (", fkSnpPcoaVar[2],"%)", sep = "")) + #Prints percent variation explained by second axis
-  guides(fill = guide_legend(override.aes = list(shape = 22, size = 4, color = NA), order = 1))+
+  guides(shape = guide_legend(order = 2), linetype = guide_legend(order = 3), fill = guide_legend(override.aes = list(shape = 22, size = 4, color = NA), order = 1))+
   theme_bw()
 
 fkSnpPcoaPlot = fkSnpPcoaPlotA +
@@ -216,12 +217,188 @@ fkSnpPcoaPlot
 ggsave("../figures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
 ```
 
+##AMOVA and Pairwise Fst
+```{r, AMOVA and Pairwise Fst}
+fkVcf = read.vcfR("fkMcavNoClonesRenamed.vcf.gz")
+fkGenlightPopDepth = vcfR2genlight(fkVcf, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
+locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_") 
+popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
+strata(fkGenlightPopDepth) = data.frame(popData)
+setPop(fkGenlightPopDepth) = ~popdepth
+amova <- poppr.amova(fkGenlightPopDepth, ~popdepth) #Runs AMOVA
+amova
+set.seed(1999)
+amovasignif   <- randtest(amova, nrepet = 99) #Calculates significance levels of the AMOVA with 999 permutations
+amovasignif
+
+fkVcf = read.vcfR("fkMcavNoClonesRenamed.vcf.gz")
+fkGenlightPopDepth = vcfR2genlight(fkVcf, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
+locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_") 
+popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
+strata(fkGenlightPopDepth) = data.frame(popData)
+setPop(fkGenlightPopDepth) = ~popdepth
+
+set.seed(694)
+fk.fst<-stamppFst(fkGenlightPopDepth, nboots = 99, percent = 95, nclusters = 4) #99 permutations
+fk.fst$Fsts
+fk.fst$Pvalues
+
+pops = c("TER-North-Mesophotic", "TER-North-Shallow", "TER-South-Mesophotic", "TER-South-Shallow", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic", "Upper Keys-Shallow")
+
+#pops1 = c("TER-South-Shallow", "TER-South-Mesophotic", "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
+
+
+# reads in fst matrix
+snpFstMa = as.data.frame(fk.fst$Fsts)
+names(snpFstMa) = pops
+row.names(snpFstMa) = pops
+
+snpFstMa$Pop = factor(row.names(snpFstMa), levels = unique(pops))
+levels(snpFstMa$Pop)
+
+snpQMa = data.frame(fk.fst$Pvalues)
+names(snpQMa)= pops
+row.names(snpQMa) = pops
+snpQMa$Pop = factor(row.names(snpQMa), levels = unique(pops))
+
+snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+ 
+  geom_tile(color = "white")+ 
+  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1), 
+                       space = "Lab", name = expression(paste(italic("F")[ST])))+ 
+  geom_text(data = snpFst, aes(Pop, Pop2, label = Fst), color = ifelse(snpQ$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQ$Qval < 0.05, 6, 5)) +
+  guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
+  scale_y_discrete(position = "right")+
+  scale_x_discrete(labels = str_wrap(snpFst$Pop, width = 6)) +
+  #ggtitle("   SNP") +
+  theme_minimal()
+
+snpHeatmap = snpHeatmapA + theme(
+  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"), 
+  axis.text.y = element_text(size = 16, color = "black"),
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = "right",
+  legend.direction = "vertical",
+  legend.title = element_text(size = 16),
+  legend.text = element_text(size = 14),
+  plot.title = element_text(size = 16)
+)
+
+snpHeatmap 
+
+ggsave("snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
+```
+##ADMIXTURE Plot
+```{r, ADMIXTURE}
+df <- read.csv("fkMcavNoClones_k4.csv")
+df$sample <- factor(df$sample, levels= df$sample[order(df$cluster4)])
+
+mdat = melt(df, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+
+#mdat$pop = factor(mdat$pop, levels(mdat$pop)[c("TER-South-Shallow", "TER-South-Mesophotic", "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")])
+
+p = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry)) +
+  geom_bar(stat="identity", position="stack") +
+  facet_grid(. ~ pop, drop=TRUE, space="free", scales="free")
+
+#col2 = c("turquoise", "blue", "green", "purple")
+
+#names(col2) = levels(mdat$Ancestry)
+
+p2 = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
+  geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
+  facet_grid(~fct_inorder(pop), scales = "free", switch = "x", space = "free") +
+  labs(x = "Population", y = "Ancestry") +
+  ggtitle("K4 NGSAdmixture Plot") +
+  theme(plot.title = element_text(hjust = 0.5),
+  panel.grid=element_blank(),
+  panel.background=element_rect(fill=NA, colour="grey25"),
+  panel.spacing.x=grid:::unit(0, "lines"),
+  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
+  #axis.text.x=element_text(size=12, angle=90)
+  axis.text.x = element_blank(),
+  axis.ticks.x=element_blank(),
+  strip.background=element_blank(),
+  strip.text=element_text(size=12, angle=90),
+  legend.key=element_blank(),
+  legend.position = "none",
+  legend.title = element_blank()) +
+  scale_x_discrete(expand=c(0, 0)) +
+  scale_y_continuous(expand=c(0, 0)) +
+  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
+  guides(fill=guide_legend(override.aes=list(colour=NULL)))
+
+p2
+
+ggsave("admixturePlot.tiff", plot = p2, width = 30, height = 15, units = "cm", dpi = 300)
+```
+
 ##Zoox and Depth
 ```{r, zooxDepth}
- 
+install.packages("moments")
+library(moments)
 zooxProportions=read.csv("zooxProportions.csv", header=TRUE)
-zooxProportions
+skewness(zooxProportions$fracZ, na.rm = TRUE)
 
-zooxDepthPlot=ggplot(zooxProportions, aes(x=Depth, y=fracZ)) + geom_point()
+zooxDepthPlot=ggplot(zooxProportions, aes(x=depth, y=fracZ)) + 
+  geom_point()+
+  geom_smooth(method = "lm")
 
+zooxDepthPlot
+
+install.packages("car")
+library(car)
+
+library(car)
+leveneTest(fracZ ~ site*depthZone, data = zooxProportions)
+res.aov3 <- aov(fracZ ~ site * depthZone, data = zooxProportions)
+shapiro.test(zooxProportions$fracZ)
+residualplot=plot(res.aov3, 2)
+zooxAnova <- aov(fracZ ~ site * depthZone, data = zooxProportions)
+Anova(zooxAnova, type = "III")
+
+zooxBoxPlot=ggplot(zooxProportions, aes(x=site, y=fracZ, fill=depthZone)) +
+  geom_boxplot()
+
+#Zoox Plot
+
+dfZoox = read.csv("zooxProportionsUpdated.csv")
+dfZoox$Order = c(1:nrow(dfZoox))
+
+zDat = melt(dfZoox, id.vars = c("Sample", "Population", "Order"), variable.name = "Symbiont", value.name = "Fraction")
+colPalZoox = brewer.pal(4, "BrBG")
+names(colPalZoox) = levels(zDat$Symbiont)
+
+zooxPlotA = ggplot(data = zDat, aes(x = Order, y = Fraction, fill = Symbiont, order = Order)) +
+  geom_bar(stat = "identity", position = "fill", width = 1, colour = "grey25") +
+  xlab("Population") +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0), labels = function(x) paste0(x*100, "%")) +
+  scale_fill_manual(values = colPalZoox, name = "Symbiodiniaceae genus") +
+  scale_color_brewer(palette = "Dark2") +
+  facet_grid(.~fct_inorder(Population), scales = "free", switch = "x", space = "free") +
+  coord_cartesian(ylim = c(-.01,1.01), clip = "off") +
+  guides(color = FALSE) +
+  theme_bw()
+  
+zooxPlot = zooxPlotA + theme(
+  plot.title = element_blank(),
+  panel.background = element_blank(),
+  panel.spacing.x = grid:::unit(0, "lines"),
+  panel.border = element_rect(color = "black", size = 2, linetype = "solid"),
+  axis.text.x=element_blank(),
+  axis.text.y=element_text(size = 12, color = "black"),
+  axis.title.x=element_text(size = 16),
+  axis.title.y = element_blank(),
+  axis.ticks.x=element_blank(),
+  axis.ticks.y = element_line(color = "black"),
+  strip.text=element_text(size = 16, angle = 90, hjust = 1, vjust = 0, color = NA),
+  strip.background = element_blank(),
+  legend.text = element_text(face = "italic"))
+zooxPlot
 ```

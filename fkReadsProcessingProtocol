@@ -194,6 +194,19 @@ done
 #These sam files should now only have MCAV reads
 
 ################################################################################
+mkdir zooxSams
+srun cp ./samsConcat/*.sam ./zooxSams
+
+#Re-write sams files without any reads aligning to algal symbiont transcriptomes
+
+for f in *.trim.bt2.sam
+do
+  egrep "chr11|chr12|chr13|chr14" < "$f" > "$f".trim.bt2.zoox.sam
+done
+
+#These sam files should now only have zoox reads
+
+################################################################################
 mkdir mcavBams
 srun cp ./mcavSams/*.sam ./mcavBams
 
@@ -330,3 +343,63 @@ NB=`cat bamsNoClones | wc -l`
 zcat fkMcavNoClones.mafs.gz | tail -n +2 | cut -f 1,2 > mc1.sites
 module load gsl
 ngsLD --geno fkMcavNoClones.geno.gz --probs 1 --n_ind $NB --n_sites $NS --max_kb_dist 0 --pos mc1.sites --out fkMcavNoClones.LD --n_threads 12 --extend_out 1
+
+# individual heterozygosities (proportion of heterozygotes across SNPs that pass filters)
+##DID NOT WORK NEED TO TRY LATER
+Rscript ~/bin/heterozygosity_beagle.R fkMcavNoClones.beagle.gz
+
+#Relatedness
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doVcf 1 -doPost 1 -doGlf 3"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoClonesRelated
+
+
+##Sams counts?
+samtools view -c -F 260 *.sam > zooxSamCounts
+
+##SFS Analysis
+FILTERS="-uniqueOnly 1 -remove_bads 1  -skipTriallelic 1 -minMapQ 20 -minQ 25 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162 "
+TODO="-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2 -doGeno 11"
+# ANGSD command:
+angsd -b bamsNoClones -GL 1 -P 1 $FILTERS $TODO -out sfilt
+
+###HETMAJORITYPROB DID NOT WORK
+
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+TODO="-doSaf 1 -doMajorMinor 1 -doMaf 1 -doPost 1 -anc $GENOME_REF -ref $GENOME_REF"
+angsd -b pop0.bams -GL 1 -P 1 $TODO -out pop0
+angsd -b pop1.bams -GL 1 -P 1 $TODO -out pop1
+angsd -b pop2.bams -GL 1 -P 1 $TODO -out pop2
+angsd -b pop3.bams -GL 1 -P 1 $TODO -out pop3
+angsd -b pop4.bams -GL 1 -P 1 $TODO -out pop4
+angsd -b pop5.bams -GL 1 -P 1 $TODO -out pop5
+angsd -b pop6.bams -GL 1 -P 1 $TODO -out pop6
+angsd -b pop7.bams -GL 1 -P 1 $TODO -out pop7
+
+# generating per-population SFS
+realSFS pop0.saf.idx >pop0.sfs
+realSFS pop1.saf.idx >pop1.sfs
+realSFS pop2.saf.idx >pop2.sfs
+realSFS pop3.saf.idx >pop3.sfs
+realSFS pop4.saf.idx >pop4.sfs
+realSFS pop5.saf.idx >pop5.sfs
+realSFS pop6.saf.idx >pop6.sfs
+realSFS pop7.saf.idx >pop7.sfs
+
+
+# generating dadi-like posterior counts based on sfs priors
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+
+
+# converting to dadi-snp format understood by dadi an Moments:
+# (numbers after the input file name are numbers of individuals sampled per population)
+realsfs2dadi.pl dadiout 20 20 >2pops_dadi.data
