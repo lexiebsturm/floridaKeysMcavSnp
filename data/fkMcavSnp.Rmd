@@ -262,6 +262,17 @@ names(snpQMa)= pops
 row.names(snpQMa) = pops
 snpQMa$Pop = factor(row.names(snpQMa), levels = unique(pops))
 
+snpFst = melt(snpFstMa, id.vars = "Pop", value.name = "Fst", variable.name = "Pop2", na.rm = TRUE)
+snpFst = snpFst[snpFst$Pop != snpFst$Pop2,]
+snpFst$Fst = round(snpFst$Fst, 3)
+snpFst = snpFst %>% mutate(Fst = replace(Fst, Fst < 0, 0))
+head(snpFst)
+
+snpQ = melt(snpQMa, id.vars = "Pop", value.name = "Pval", variable.name = "Pop2", na.rm = TRUE)
+snpQ = snpQ[snpQ$Pop != snpQ$Pop2,]
+snpQ$Qval = p.adjust(snpQ$Pval, method = "BH")
+head(snpQ)
+
 snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+
   geom_tile(color = "white")+
   scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1),
