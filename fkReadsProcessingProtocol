@@ -398,8 +398,85 @@ realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_
 realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
 realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
 realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
-
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
 
 # converting to dadi-snp format understood by dadi an Moments:
 # (numbers after the input file name are numbers of individuals sampled per population)
 realsfs2dadi.pl dadiout 20 20 >2pops_dadi.data
+
+##Could not get the realSFS subfunction to work on KOKO
+#downloaded and installed angsd on local drive and scp SAF_analysis directory into local angsd directory
+
+nano makeml.sh
+#Add the information between the carrots
+>>>>>>>
+#!/bin/bash
+../misc/realSFS pop1.saf.idx pop2.saf.idx -P 24 >pop1.pop2.ml
+../misc/realSFS pop1.saf.idx pop3.saf.idx -P 24 >pop1.pop3.ml
+../misc/realSFS pop1.saf.idx pop4.saf.idx -P 24 >pop1.pop4.ml
+../misc/realSFS pop1.saf.idx pop5.saf.idx -P 24 >pop1.pop5.ml
+../misc/realSFS pop1.saf.idx pop6.saf.idx -P 24 >pop1.pop6.ml
+../misc/realSFS pop1.saf.idx pop7.saf.idx -P 24 >pop1.pop7.ml
+../misc/realSFS pop1.saf.idx pop8.saf.idx -P 24 >pop1.pop8.ml
+../misc/realSFS pop2.saf.idx pop3.saf.idx -P 24 >pop2.pop3.ml
+../misc/realSFS pop2.saf.idx pop4.saf.idx -P 24 >pop2.pop4.ml
+../misc/realSFS pop2.saf.idx pop5.saf.idx -P 24 >pop2.pop5.ml
+../misc/realSFS pop2.saf.idx pop6.saf.idx -P 24 >pop2.pop6.ml
+../misc/realSFS pop2.saf.idx pop7.saf.idx -P 24 >pop2.pop7.ml
+../misc/realSFS pop2.saf.idx pop8.saf.idx -P 24 >pop2.pop8.ml
+../misc/realSFS pop3.saf.idx pop4.saf.idx -P 24 >pop3.pop4.ml
+../misc/realSFS pop3.saf.idx pop5.saf.idx -P 24 >pop3.pop5.ml
+../misc/realSFS pop3.saf.idx pop6.saf.idx -P 24 >pop3.pop6.ml
+../misc/realSFS pop3.saf.idx pop7.saf.idx -P 24 >pop3.pop7.ml
+../misc/realSFS pop3.saf.idx pop8.saf.idx -P 24 >pop3.pop8.ml
+../misc/realSFS pop4.saf.idx pop5.saf.idx -P 24 >pop4.pop5.ml
+../misc/realSFS pop4.saf.idx pop6.saf.idx -P 24 >pop4.pop6.ml
+../misc/realSFS pop4.saf.idx pop7.saf.idx -P 24 >pop4.pop7.ml
+../misc/realSFS pop4.saf.idx pop8.saf.idx -P 24 >pop4.pop8.ml
+../misc/realSFS pop5.saf.idx pop6.saf.idx -P 24 >pop5.pop6.ml
+../misc/realSFS pop5.saf.idx pop7.saf.idx -P 24 >pop5.pop7.ml
+../misc/realSFS pop5.saf.idx pop8.saf.idx -P 24 >pop5.pop8.ml
+../misc/realSFS pop6.saf.idx pop7.saf.idx -P 24 >pop6.pop7.ml
+../misc/realSFS pop6.saf.idx pop8.saf.idx -P 24 >pop6.pop8.ml
+../misc/realSFS pop7.saf.idx pop8.saf.idx -P 24 >pop7.pop8.ml
+>>>>>>
+
+chmod +x makeml.sh
+./makeml.sh
+
+
+#!/bin/bash
+../misc/realSFS fst index pop1.saf.idx pop2.saf.idx -sfs pop1.pop2.ml -fstout pop1.pop2
+../misc/realSFS fst index pop1.saf.idx pop3.saf.idx -sfs pop1.pop3.ml -fstout pop1.pop3
+../misc/realSFS fst index pop1.saf.idx pop4.saf.idx -sfs pop1.pop4.ml -fstout pop1.pop4
+../misc/realSFS fst index pop1.saf.idx pop5.saf.idx -sfs pop1.pop5.ml -fstout pop1.pop5
+../misc/realSFS fst index pop1.saf.idx pop6.saf.idx -sfs pop1.pop6.ml -fstout pop1.pop6
+../misc/realSFS fst index pop1.saf.idx pop7.saf.idx -sfs pop1.pop7.ml -fstout pop1.pop7
+../misc/realSFS fst index pop1.saf.idx pop8.saf.idx -sfs pop1.pop8.ml -fstout pop1.pop8
+../misc/realSFS fst index pop2.saf.idx pop3.saf.idx -sfs pop2.pop3.ml -fstout pop2.pop3
+../misc/realSFS fst index pop2.saf.idx pop4.saf.idx -sfs pop2.pop4.ml -fstout pop2.pop4
+../misc/realSFS fst index pop2.saf.idx pop5.saf.idx -sfs pop2.pop5.ml -fstout pop2.pop5
+../misc/realSFS fst index pop2.saf.idx pop6.saf.idx -sfs pop2.pop6.ml -fstout pop2.pop6
+../misc/realSFS fst index pop2.saf.idx pop7.saf.idx -sfs pop2.pop7.ml -fstout pop2.pop7
+../misc/realSFS fst index pop2.saf.idx pop8.saf.idx -sfs pop2.pop8.ml -fstout pop2.pop8
+../misc/realSFS fst index pop3.saf.idx pop4.saf.idx -sfs pop3.pop4.ml -fstout pop3.pop4
+../misc/realSFS fst index pop3.saf.idx pop5.saf.idx -sfs pop3.pop5.ml -fstout pop3.pop5
+../misc/realSFS fst index pop3.saf.idx pop6.saf.idx -sfs pop3.pop6.ml -fstout pop3.pop6
+../misc/realSFS fst index pop3.saf.idx pop7.saf.idx -sfs pop3.pop7.ml -fstout pop3.pop7
+../misc/realSFS fst index pop3.saf.idx pop8.saf.idx -sfs pop3.pop8.ml -fstout pop3.pop8
+../misc/realSFS fst index pop4.saf.idx pop5.saf.idx -sfs pop4.pop5.ml -fstout pop4.pop5
+../misc/realSFS fst index pop4.saf.idx pop6.saf.idx -sfs pop4.pop6.ml -fstout pop4.pop6
+../misc/realSFS fst index pop4.saf.idx pop7.saf.idx -sfs pop4.pop7.ml -fstout pop4.pop7
+../misc/realSFS fst index pop4.saf.idx pop8.saf.idx -sfs pop4.pop8.ml -fstout pop4.pop8
+../misc/realSFS fst index pop5.saf.idx pop6.saf.idx -sfs pop5.pop6.ml -fstout pop5.pop6
+../misc/realSFS fst index pop5.saf.idx pop7.saf.idx -sfs pop5.pop7.ml -fstout pop5.pop7
+../misc/realSFS fst index pop5.saf.idx pop8.saf.idx -sfs pop5.pop8.ml -fstout pop5.pop8
+../misc/realSFS fst index pop6.saf.idx pop7.saf.idx -sfs pop6.pop7.ml -fstout pop6.pop7
+../misc/realSFS fst index pop6.saf.idx pop8.saf.idx -sfs pop6.pop8.ml -fstout pop6.pop8
+../misc/realSFS fst index pop7.saf.idx pop8.saf.idx -sfs pop7.pop8.ml -fstout pop7.pop8
+
+#Run for each pop comparison index file
+../misc/realSFS fst stats pop1.pop2.fst.idx
+
+#FST stats
