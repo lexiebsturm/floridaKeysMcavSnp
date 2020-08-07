@@ -245,7 +245,8 @@ fk.fst$Pvalues
 
 pops = c("TER-North-Mesophotic", "TER-North-Shallow", "TER-South-Mesophotic", "TER-South-Shallow", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic", "Upper Keys-Shallow")
 
-#pops1 = c("TER-South-Shallow", "TER-South-Mesophotic", "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
+#pops1 = c("TER-South-Shallow", "TER-South-Mesophotic", "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic") 
+# need to make in this order.
 
 
 # reads in fst matrix
