@@ -20,7 +20,7 @@ options(width = 88, scipen = 4)
 
 # About this document
 ***  
-All analyses were performed in R version 3.6.2. 
+All analyses were performed in R version 3.6.2.
 This is the code that accompanies the publication XXX. Here you will find all the code to repeat the statistical analyses performed in R and the figures created for the manuscript. The accompanying library preparation protocol and bioinformatic walkthrough can be found by clicking on the links.
 
 If you have any issues or questions about the code please feel free to send an email to lexie.sturm@gmail.com.
@@ -30,7 +30,7 @@ If you have any issues or questions about the code please feel free to send an e
 # Basic setup of R environment
 ***
 ## Loading required packages
-Make sure to set the working directory: 
+Make sure to set the working directory:
 `setwd("~/path/to/directory/with/data")`
 
 ```{r, set working directory}
@@ -133,7 +133,7 @@ snpDendPoints = snpDData$labels
 snpDendPoints$site = snpI2P[,2][order.dendrogram(snpDend)]
 snpDendPoints$depth = snpI2P[,3][order.dendrogram(snpDend)]
 
-snpDendA = ggplot() + 
+snpDendA = ggplot() +
   geom_segment(data = segment(snpDData), aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_point(data = snpDendPoints, aes(x = x, y = y, fill = site, shape = depth), size = 5) +
   scale_shape_manual(values=c(25, 24), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
@@ -156,7 +156,7 @@ ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, uni
 snpMa = as.matrix(read.table("fkMcavNoClones.ibsMat"))
 fkMds = cmdscale(snpMa, eig = TRUE, x.ret = TRUE)
 
-# Determine percent variation captured on each axis 
+# Determine percent variation captured on each axis
 # Calculate the eigenvalues so later we can figure out % variation shown on each Principal Coordinate
 fkSnpPcoaVar = round(fkMds$eig/sum(fkMds$eig)*100, 1)
 fkSnpPcoaVar
@@ -221,7 +221,7 @@ ggsave("../figures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width 
 ```{r, AMOVA and Pairwise Fst}
 fkVcf = read.vcfR("fkMcavNoClonesRenamed.vcf.gz")
 fkGenlightPopDepth = vcfR2genlight(fkVcf, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
-locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_") 
+locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_")
 popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
 strata(fkGenlightPopDepth) = data.frame(popData)
 setPop(fkGenlightPopDepth) = ~popdepth
@@ -233,7 +233,7 @@ amovasignif
 
 fkVcf = read.vcfR("fkMcavNoClonesRenamed.vcf.gz")
 fkGenlightPopDepth = vcfR2genlight(fkVcf, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
-locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_") 
+locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_")
 popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
 strata(fkGenlightPopDepth) = data.frame(popData)
 setPop(fkGenlightPopDepth) = ~popdepth
@@ -262,10 +262,10 @@ names(snpQMa)= pops
 row.names(snpQMa) = pops
 snpQMa$Pop = factor(row.names(snpQMa), levels = unique(pops))
 
-snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+ 
-  geom_tile(color = "white")+ 
-  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1), 
-                       space = "Lab", name = expression(paste(italic("F")[ST])))+ 
+snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1),
+                       space = "Lab", name = expression(paste(italic("F")[ST])))+
   geom_text(data = snpFst, aes(Pop, Pop2, label = Fst), color = ifelse(snpQ$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQ$Qval < 0.05, 6, 5)) +
   guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
   scale_y_discrete(position = "right")+
@@ -274,7 +274,7 @@ snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+
   theme_minimal()
 
 snpHeatmap = snpHeatmapA + theme(
-  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"), 
+  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"),
   axis.text.y = element_text(size = 16, color = "black"),
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
@@ -290,7 +290,7 @@ snpHeatmap = snpHeatmapA + theme(
   plot.title = element_text(size = 16)
 )
 
-snpHeatmap 
+snpHeatmap
 
 ggsave("snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
 ```
@@ -346,7 +346,7 @@ library(moments)
 zooxProportions=read.csv("zooxProportions.csv", header=TRUE)
 skewness(zooxProportions$fracZ, na.rm = TRUE)
 
-zooxDepthPlot=ggplot(zooxProportions, aes(x=depth, y=fracZ)) + 
+zooxDepthPlot=ggplot(zooxProportions, aes(x=depth, y=fracZ)) +
   geom_point()+
   geom_smooth(method = "lm")
 
@@ -386,7 +386,7 @@ zooxPlotA = ggplot(data = zDat, aes(x = Order, y = Fraction, fill = Symbiont, or
   coord_cartesian(ylim = c(-.01,1.01), clip = "off") +
   guides(color = FALSE) +
   theme_bw()
-  
+
 zooxPlot = zooxPlotA + theme(
   plot.title = element_blank(),
   panel.background = element_blank(),
