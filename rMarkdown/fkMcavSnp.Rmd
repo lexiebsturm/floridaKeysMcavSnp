@@ -292,7 +292,6 @@ snpHeatmap = snpHeatmapA + theme(
   panel.border = element_blank(),
   panel.background = element_blank(),
   axis.ticks = element_blank(),
-  legend.justification = c(1, 0),
   legend.position = "right",
   legend.direction = "vertical",
   legend.title = element_text(size = 16),
