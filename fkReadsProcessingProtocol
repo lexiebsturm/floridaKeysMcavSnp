@@ -368,28 +368,50 @@ TODO="-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2 -doGeno 11"
 angsd -b bamsNoClones -GL 1 -P 1 $FILTERS $TODO -out sfilt
 
 ###HETMAJORITYPROB DID NOT WORK
+# extracting and indexing list of sites to make SFS from
+# filtering out sites where heterozygote counts comprise more than 50% of all counts (likely lumped paralogs)
+zcat sfilt.snpStat.gz | awk '($3+$4+$5+$6)>0' | awk '($12+$13+$14+$15)/($3+$4+$5+$6)<0.5' | cut -f 1,2  >sites2do
+angsd sites index sites2do
+
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
 
 # estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
 export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
 TODO="-doSaf 1 -doMajorMinor 1 -doMaf 1 -doPost 1 -anc $GENOME_REF -ref $GENOME_REF"
-angsd -b pop0.bams -GL 1 -P 1 $TODO -out pop0
-angsd -b pop1.bams -GL 1 -P 1 $TODO -out pop1
-angsd -b pop2.bams -GL 1 -P 1 $TODO -out pop2
-angsd -b pop3.bams -GL 1 -P 1 $TODO -out pop3
-angsd -b pop4.bams -GL 1 -P 1 $TODO -out pop4
-angsd -b pop5.bams -GL 1 -P 1 $TODO -out pop5
-angsd -b pop6.bams -GL 1 -P 1 $TODO -out pop6
-angsd -b pop7.bams -GL 1 -P 1 $TODO -out pop7
+
+nano sfiltAngsd
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+srun angsd -sites sites2do -b pop0.bams -minInd 10 -GL 1 -P 1 $TODO -out pop0
+srun angsd -sites sites2do -b pop1.bams -minInd 23 -GL 1 -P 1 $TODO -out pop1
+srun angsd -sites sites2do -b pop2.bams -minInd 18 -GL 1 -P 1 $TODO -out pop2
+srun angsd -sites sites2do -b pop3.bams -minInd 21 -GL 1 -P 1 $TODO -out pop3
+srun angsd -sites sites2do -b pop4.bams -minInd 28 -GL 1 -P 1 $TODO -out pop4
+srun angsd -sites sites2do -b pop5.bams -minInd 21 -GL 1 -P 1 $TODO -out pop5
+srun angsd -sites sites2do -b pop6.bams -minInd 19 -GL 1 -P 1 $TODO -out pop6
+srun angsd -sites sites2do -b pop7.bams -minInd 24 -GL 1 -P 1 $TODO -out pop7
 
 # generating per-population SFS
-realSFS pop0.saf.idx >pop0.sfs
-realSFS pop1.saf.idx >pop1.sfs
-realSFS pop2.saf.idx >pop2.sfs
-realSFS pop3.saf.idx >pop3.sfs
-realSFS pop4.saf.idx >pop4.sfs
-realSFS pop5.saf.idx >pop5.sfs
-realSFS pop6.saf.idx >pop6.sfs
-realSFS pop7.saf.idx >pop7.sfs
+../misc/realSFS pop0.saf.idx >pop0.sfs
+../misc/realSFS pop1.saf.idx >pop1.sfs
+../misc/realSFS pop2.saf.idx >pop2.sfs
+../misc/realSFS pop3.saf.idx >pop3.sfs
+../misc/realSFS pop4.saf.idx >pop4.sfs
+../misc/realSFS pop5.saf.idx >pop5.sfs
+../misc/realSFS pop6.saf.idx >pop6.sfs
+../misc/realSFS pop7.saf.idx >pop7.sfs
 
 
 # generating dadi-like posterior counts based on sfs priors
@@ -445,38 +467,261 @@ nano makeml.sh
 chmod +x makeml.sh
 ./makeml.sh
 
-
+nano fst.sh #between the carrots put:
+>>>>>>
 #!/bin/bash
+../misc/realSFS fst index pop0.saf.idx pop1.saf.idx -sfs pop0.pop1.ml -fstout pop0.pop1
+../misc/realSFS fst index pop0.saf.idx pop2.saf.idx -sfs pop0.pop2.ml -fstout pop0.pop2
+../misc/realSFS fst index pop0.saf.idx pop3.saf.idx -sfs pop0.pop3.ml -fstout pop0.pop3
+../misc/realSFS fst index pop0.saf.idx pop4.saf.idx -sfs pop0.pop4.ml -fstout pop0.pop4
+../misc/realSFS fst index pop0.saf.idx pop5.saf.idx -sfs pop0.pop5.ml -fstout pop0.pop5
+../misc/realSFS fst index pop0.saf.idx pop6.saf.idx -sfs pop0.pop6.ml -fstout pop0.pop6
+../misc/realSFS fst index pop0.saf.idx pop7.saf.idx -sfs pop0.pop7.ml -fstout pop0.pop7
 ../misc/realSFS fst index pop1.saf.idx pop2.saf.idx -sfs pop1.pop2.ml -fstout pop1.pop2
 ../misc/realSFS fst index pop1.saf.idx pop3.saf.idx -sfs pop1.pop3.ml -fstout pop1.pop3
 ../misc/realSFS fst index pop1.saf.idx pop4.saf.idx -sfs pop1.pop4.ml -fstout pop1.pop4
 ../misc/realSFS fst index pop1.saf.idx pop5.saf.idx -sfs pop1.pop5.ml -fstout pop1.pop5
 ../misc/realSFS fst index pop1.saf.idx pop6.saf.idx -sfs pop1.pop6.ml -fstout pop1.pop6
 ../misc/realSFS fst index pop1.saf.idx pop7.saf.idx -sfs pop1.pop7.ml -fstout pop1.pop7
-../misc/realSFS fst index pop1.saf.idx pop8.saf.idx -sfs pop1.pop8.ml -fstout pop1.pop8
 ../misc/realSFS fst index pop2.saf.idx pop3.saf.idx -sfs pop2.pop3.ml -fstout pop2.pop3
 ../misc/realSFS fst index pop2.saf.idx pop4.saf.idx -sfs pop2.pop4.ml -fstout pop2.pop4
 ../misc/realSFS fst index pop2.saf.idx pop5.saf.idx -sfs pop2.pop5.ml -fstout pop2.pop5
 ../misc/realSFS fst index pop2.saf.idx pop6.saf.idx -sfs pop2.pop6.ml -fstout pop2.pop6
 ../misc/realSFS fst index pop2.saf.idx pop7.saf.idx -sfs pop2.pop7.ml -fstout pop2.pop7
-../misc/realSFS fst index pop2.saf.idx pop8.saf.idx -sfs pop2.pop8.ml -fstout pop2.pop8
 ../misc/realSFS fst index pop3.saf.idx pop4.saf.idx -sfs pop3.pop4.ml -fstout pop3.pop4
 ../misc/realSFS fst index pop3.saf.idx pop5.saf.idx -sfs pop3.pop5.ml -fstout pop3.pop5
 ../misc/realSFS fst index pop3.saf.idx pop6.saf.idx -sfs pop3.pop6.ml -fstout pop3.pop6
 ../misc/realSFS fst index pop3.saf.idx pop7.saf.idx -sfs pop3.pop7.ml -fstout pop3.pop7
-../misc/realSFS fst index pop3.saf.idx pop8.saf.idx -sfs pop3.pop8.ml -fstout pop3.pop8
 ../misc/realSFS fst index pop4.saf.idx pop5.saf.idx -sfs pop4.pop5.ml -fstout pop4.pop5
 ../misc/realSFS fst index pop4.saf.idx pop6.saf.idx -sfs pop4.pop6.ml -fstout pop4.pop6
 ../misc/realSFS fst index pop4.saf.idx pop7.saf.idx -sfs pop4.pop7.ml -fstout pop4.pop7
-../misc/realSFS fst index pop4.saf.idx pop8.saf.idx -sfs pop4.pop8.ml -fstout pop4.pop8
 ../misc/realSFS fst index pop5.saf.idx pop6.saf.idx -sfs pop5.pop6.ml -fstout pop5.pop6
 ../misc/realSFS fst index pop5.saf.idx pop7.saf.idx -sfs pop5.pop7.ml -fstout pop5.pop7
-../misc/realSFS fst index pop5.saf.idx pop8.saf.idx -sfs pop5.pop8.ml -fstout pop5.pop8
 ../misc/realSFS fst index pop6.saf.idx pop7.saf.idx -sfs pop6.pop7.ml -fstout pop6.pop7
-../misc/realSFS fst index pop6.saf.idx pop8.saf.idx -sfs pop6.pop8.ml -fstout pop6.pop8
-../misc/realSFS fst index pop7.saf.idx pop8.saf.idx -sfs pop7.pop8.ml -fstout pop7.pop8
+>>>>>>
+
+chmod +x fst.sh
+./fst.sh
+
+
 
 #Run for each pop comparison index file
 ../misc/realSFS fst stats pop1.pop2.fst.idx
 
 #FST stats
+#Run for each pop comparison index file
+../misc/realSFS fst stats pop0.pop1.fst.idx
+# FST.Unweight[nObs:6817706]:0.034252 Fst.Weight:0.121263
+
+../misc/realSFS fst stats pop0.pop2.fst.idx
+# FST.Unweight[nObs:6993131]:0.019568 Fst.Weight:0.048224
+
+../misc/realSFS fst stats pop0.pop3.fst.idx
+# FST.Unweight[nObs:7018572]:0.024720 Fst.Weight:0.074727
+
+../misc/realSFS fst stats pop0.pop4.fst.idx
+#FST.Unweight[nObs:7120329]:0.014838 Fst.Weight:0.035038
+
+../misc/realSFS fst stats pop0.pop5.fst.idx
+#FST.Unweight[nObs:6829397]:0.035328 Fst.Weight:0.125949
+
+../misc/realSFS fst stats pop0.pop6.fst.idx
+#FST.Unweight[nObs:6993913]:0.016567 Fst.Weight:0.033560
+
+../misc/realSFS fst stats pop0.pop7.fst.idx
+#FST.Unweight[nObs:7030323]:0.014457 Fst.Weight:0.038968
+
+../misc/realSFS fst stats pop1.pop2.fst.idx
+#FST.Unweight[nObs:7320847]:0.020724 Fst.Weight:0.056960
+
+../misc/realSFS fst stats pop1.pop3.fst.idx
+#FST.Unweight[nObs:7462171]:0.015732 Fst.Weight:0.035398
+
+../misc/realSFS fst stats pop1.pop4.fst.idx
+#FST.Unweight[nObs:7477669]:0.027870 Fst.Weight:0.113935
+
+../misc/realSFS fst stats pop1.pop5.fst.idx
+#FST.Unweight[nObs:7362641]:0.012240 Fst.Weight:0.022469
+
+../misc/realSFS fst stats pop1.pop6.fst.idx
+#FST.Unweight[nObs:7255563]:0.032566 Fst.Weight:0.121322
+
+../misc/realSFS fst stats pop1.pop7.fst.idx
+#FST.Unweight[nObs:7307584]:0.033242 Fst.Weight:0.134973
+
+../misc/realSFS fst stats pop2.pop3.fst.idx
+#FST.Unweight[nObs:7532626]:0.015191 Fst.Weight:0.030638
+
+../misc/realSFS fst stats pop2.pop4.fst.idx
+#FST.Unweight[nObs:7723254]:0.015311 Fst.Weight:0.036193
+
+../misc/realSFS fst stats pop2.pop5.fst.idx
+#FST.Unweight[nObs:7269843]:0.024419 Fst.Weight:0.077586
+
+../misc/realSFS fst stats pop2.pop6.fst.idx
+#FST.Unweight[nObs:7498766]:0.016821 Fst.Weight:0.038018
+
+../misc/realSFS fst stats pop2.pop7.fst.idx
+#FST.Unweight[nObs:7595785]:0.016778 Fst.Weight:0.045043
+
+../misc/realSFS fst stats pop3.pop4.fst.idx
+#FST.Unweight[nObs:7791134]:0.019739 Fst.Weight:0.066106
+
+../misc/realSFS fst stats pop3.pop5.fst.idx
+#FST.Unweight[nObs:7433270]:0.016753 Fst.Weight:0.036125
+
+../misc/realSFS fst stats pop3.pop6.fst.idx
+#FST.Unweight[nObs:7576604]:0.021058 Fst.Weight:0.065665
+
+../misc/realSFS fst stats pop3.pop7.fst.idx
+#FST.Unweight[nObs:7406283]:0.023794 Fst.Weight:0.082044
+
+../misc/realSFS fst stats pop4.pop5.fst.idx
+#FST.Unweight[nObs:7385833]:0.029774 Fst.Weight:0.123724
+
+../misc/realSFS fst stats pop4.pop6.fst.idx
+#FST.Unweight[nObs:7714984]:0.011621 Fst.Weight:0.016607
+
+../misc/realSFS fst stats pop4.pop7.fst.idx
+#FST.Unweight[nObs:7727503]:0.011578 Fst.Weight:0.021950
+
+../misc/realSFS fst stats pop5.pop6.fst.idx
+#FST.Unweight[nObs:7195893]:0.034130 Fst.Weight:0.128870
+
+../misc/realSFS fst stats pop5.pop7.fst.idx
+#FST.Unweight[nObs:7185878]:0.036020 Fst.Weight:0.151568
+
+../misc/realSFS fst stats pop6.pop7.fst.idx
+#FST.Unweight[nObs:7370535]:0.013362 Fst.Weight:0.021280
+
+# generating per-population SFS
+#!/bin/bash
+../misc/realSFS pop0.saf.idx >pop0.sfs
+../misc/realSFS pop1.saf.idx >pop1.sfs
+../misc/realSFS pop2.saf.idx >pop2.sfs
+../misc/realSFS pop3.saf.idx >pop3.sfs
+../misc/realSFS pop4.saf.idx >pop4.sfs
+../misc/realSFS pop5.saf.idx >pop5.sfs
+../misc/realSFS pop6.saf.idx >pop6.sfs
+../misc/realSFS pop7.saf.idx >pop7.sfs
+
+# generating dadi-like posterior counts based on sfs priors
+realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref $GENOME_REF -anc $GENOME_REF >dadiout
+
+# generating dadi-like posterior counts based on sfs priors
+nano dadiOut.sh
+
+#!/bin/bash
+../misc/realSFS dadi pop0.saf.idx pop1.saf.idx -sfs pop0.sfs -sfs pop1.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout01
+../misc/realSFS dadi pop0.saf.idx pop2.saf.idx -sfs pop0.sfs -sfs pop2.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout02
+../misc/realSFS dadi pop0.saf.idx pop3.saf.idx -sfs pop0.sfs -sfs pop3.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout03
+../misc/realSFS dadi pop0.saf.idx pop4.saf.idx -sfs pop0.sfs -sfs pop4.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout04
+../misc/realSFS dadi pop0.saf.idx pop5.saf.idx -sfs pop0.sfs -sfs pop5.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout05
+../misc/realSFS dadi pop0.saf.idx pop6.saf.idx -sfs pop0.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout06
+../misc/realSFS dadi pop0.saf.idx pop7.saf.idx -sfs pop0.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout07
+../misc/realSFS dadi pop1.saf.idx pop2.saf.idx -sfs pop1.sfs -sfs pop2.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout12
+../misc/realSFS dadi pop1.saf.idx pop3.saf.idx -sfs pop1.sfs -sfs pop3.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout13
+../misc/realSFS dadi pop1.saf.idx pop4.saf.idx -sfs pop1.sfs -sfs pop4.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout14
+../misc/realSFS dadi pop1.saf.idx pop5.saf.idx -sfs pop1.sfs -sfs pop5.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout15
+../misc/realSFS dadi pop1.saf.idx pop6.saf.idx -sfs pop1.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout16
+../misc/realSFS dadi pop1.saf.idx pop7.saf.idx -sfs pop1.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout17
+../misc/realSFS dadi pop2.saf.idx pop3.saf.idx -sfs pop2.sfs -sfs pop3.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout23
+../misc/realSFS dadi pop2.saf.idx pop4.saf.idx -sfs pop2.sfs -sfs pop4.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout24
+../misc/realSFS dadi pop2.saf.idx pop5.saf.idx -sfs pop2.sfs -sfs pop5.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout25
+../misc/realSFS dadi pop2.saf.idx pop6.saf.idx -sfs pop2.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout26
+../misc/realSFS dadi pop2.saf.idx pop7.saf.idx -sfs pop2.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout27
+../misc/realSFS dadi pop3.saf.idx pop4.saf.idx -sfs pop3.sfs -sfs pop4.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout34
+../misc/realSFS dadi pop3.saf.idx pop5.saf.idx -sfs pop3.sfs -sfs pop5.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout35
+../misc/realSFS dadi pop3.saf.idx pop6.saf.idx -sfs pop3.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout36
+../misc/realSFS dadi pop3.saf.idx pop7.saf.idx -sfs pop3.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout37
+../misc/realSFS dadi pop4.saf.idx pop5.saf.idx -sfs pop4.sfs -sfs pop5.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout45
+../misc/realSFS dadi pop4.saf.idx pop6.saf.idx -sfs pop4.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout46
+../misc/realSFS dadi pop4.saf.idx pop7.saf.idx -sfs pop4.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout47
+../misc/realSFS dadi pop5.saf.idx pop6.saf.idx -sfs pop5.sfs -sfs pop6.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout56
+../misc/realSFS dadi pop5.saf.idx pop7.saf.idx -sfs pop5.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout57
+../misc/realSFS dadi pop6.saf.idx pop7.saf.idx -sfs pop6.sfs -sfs pop7.sfs -ref Mcavernosa_July2018.fasta -anc Mcavernosa_July2018.fasta >dadiout67
+
+chmod +x dadiOut.sh
+./dadiOut.sh
+
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
+# converting to dadi-snp format understood by dadi an Moments:
+# (numbers after the input file name are numbers of individuals sampled per population)
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+
+realsfs2dadi.pl dadiout01 13 30 >01pops_dadi.data
+realsfs2dadi.pl dadiout02 13 23 >02pops_dadi.data
+realsfs2dadi.pl dadiout03 13 27 >03pops_dadi.data
+realsfs2dadi.pl dadiout04 13 37 >04pops_dadi.data
+realsfs2dadi.pl dadiout05 13 28 >05pops_dadi.data
+realsfs2dadi.pl dadiout06 13 25 >06pops_dadi.data
+realsfs2dadi.pl dadiout07 13 32 >07pops_dadi.data
+realsfs2dadi.pl dadiout12 30 23 >12pops_dadi.data
+realsfs2dadi.pl dadiout13 30 27 >13pops_dadi.data
+realsfs2dadi.pl dadiout14 30 37 >14pops_dadi.data
+realsfs2dadi.pl dadiout15 30 28 >15pops_dadi.data
+realsfs2dadi.pl dadiout16 30 25 >16pops_dadi.data
+realsfs2dadi.pl dadiout17 30 32 >17pops_dadi.data
+realsfs2dadi.pl dadiout23 23 27 >23pops_dadi.data
+realsfs2dadi.pl dadiout24 23 37 >24pops_dadi.data
+realsfs2dadi.pl dadiout25 23 28 >25pops_dadi.data
+realsfs2dadi.pl dadiout26 23 25 >26pops_dadi.data
+realsfs2dadi.pl dadiout27 23 32 >27pops_dadi.data
+realsfs2dadi.pl dadiout34 27 37 >34pops_dadi.data
+realsfs2dadi.pl dadiout35 27 28 >35pops_dadi.data
+realsfs2dadi.pl dadiout36 27 25 >36pops_dadi.data
+realsfs2dadi.pl dadiout37 27 32 >37pops_dadi.data
+realsfs2dadi.pl dadiout45 37 28 >45pops_dadi.data
+realsfs2dadi.pl dadiout46 37 25 >46pops_dadi.data
+realsfs2dadi.pl dadiout47 37 32 >47pops_dadi.data
+realsfs2dadi.pl dadiout56 28 25 >56pops_dadi.data
+realsfs2dadi.pl dadiout57 28 32 >57pops_dadi.data
+realsfs2dadi.pl dadiout67 25 32 >67pops_dadi.data
+
+###Must be done in a conda environment
+#Moments Analysis
+module load anaconda/2
+source activate moments
+
+srun 2dAFS_fold.py 01pops_dadi.data pop0 pop1 11 27
+srun 2dAFS_fold.py 02pops_dadi.data pop0 pop2 11 20 #error
+srun 2dAFS_fold.py 03pops_dadi.data pop0 pop3 11 24
+srun 2dAFS_fold.py 04pops_dadi.data pop0 pop4 11 33
+srun 2dAFS_fold.py 05pops_dadi.data pop0 pop5 11 25
+srun 2dAFS_fold.py 06pops_dadi.data pop0 pop6 11 22
+srun 2dAFS_fold.py 07pops_dadi.data pop0 pop7 11 28
+srun 2dAFS_fold.py 12pops_dadi.data pop1 pop2 27 20
+srun 2dAFS_fold.py 13pops_dadi.data pop1 pop3 27 24
+srun 2dAFS_fold.py 14pops_dadi.data pop1 pop4 27 33
+srun 2dAFS_fold.py 15pops_dadi.data pop1 pop5 27 25
+srun 2dAFS_fold.py 16pops_dadi.data pop1 pop6 27 22
+srun 2dAFS_fold.py 17pops_dadi.data pop1 pop7 27 28
+srun 2dAFS_fold.py 23pops_dadi.data pop2 pop3 20 24
+srun 2dAFS_fold.py 24pops_dadi.data pop2 pop4 20 33
+srun 2dAFS_fold.py 25pops_dadi.data pop2 pop5 20 25
+srun 2dAFS_fold.py 26pops_dadi.data pop2 pop6 20 22
+srun 2dAFS_fold.py 27pops_dadi.data pop2 pop7 20 28
+srun 2dAFS_fold.py 34pops_dadi.data pop3 pop4 24 33
+srun 2dAFS_fold.py 35pops_dadi.data pop3 pop5 24 25
+srun 2dAFS_fold.py 36pops_dadi.data pop3 pop6 24 22
+srun 2dAFS_fold.py 37pops_dadi.data pop3 pop7 24 28
+srun 2dAFS_fold.py 45pops_dadi.data pop4 pop5 33 25
+srun 2dAFS_fold.py 46pops_dadi.data pop4 pop6 33 22
+srun 2dAFS_fold.py 47pops_dadi.data pop4 pop7 33 28
+srun 2dAFS_fold.py 56pops_dadi.data pop5 pop6 25 22
+srun 2dAFS_fold.py 57pops_dadi.data pop5 pop7 25 28
+srun 2dAFS_fold.py 67pops_dadi.data pop6 pop7 22 28
