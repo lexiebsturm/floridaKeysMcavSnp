@@ -1,0 +1,94 @@
+#FST stats
+#Run for each pop comparison index file
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
+../misc/realSFS fst stats Lower Keys-Meso.Lower Keys-shallow.fst.idx
+# FST.Unweight[nObs:6817706]:0.034252 Fst.Weight:0.121263
+
+../misc/realSFS fst stats Lower Keys-Meso.TER-North-Meso.fst.idx
+# FST.Unweight[nObs:6993131]:0.019568 Fst.Weight:0.048224
+
+../misc/realSFS fst stats Lower Keys-Meso.TER-North-Shallow.fst.idx
+# FST.Unweight[nObs:7018572]:0.024720 Fst.Weight:0.074727
+
+../misc/realSFS fst stats Lower Keys-Meso.TER-South-Meso.fst.idx
+#FST.Unweight[nObs:7120329]:0.014838 Fst.Weight:0.035038
+
+../misc/realSFS fst stats Lower Keys-Meso.TER-South-Shallow.fst.idx
+#FST.Unweight[nObs:6829397]:0.035328 Fst.Weight:0.125949
+
+../misc/realSFS fst stats Lower Keys-Meso.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:6993913]:0.016567 Fst.Weight:0.033560
+
+../misc/realSFS fst stats Lower Keys-Meso.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7030323]:0.014457 Fst.Weight:0.038968
+
+../misc/realSFS fst stats Lower Keys-shallow.TER-North-Meso.fst.idx
+#FST.Unweight[nObs:7320847]:0.020724 Fst.Weight:0.056960
+
+../misc/realSFS fst stats Lower Keys-shallow.TER-North-Shallow.fst.idx
+#FST.Unweight[nObs:7462171]:0.015732 Fst.Weight:0.035398
+
+../misc/realSFS fst stats Lower Keys-shallow.TER-South-Meso.fst.idx
+#FST.Unweight[nObs:7477669]:0.027870 Fst.Weight:0.113935
+
+../misc/realSFS fst stats Lower Keys-shallow.TER-South-Shallow.fst.idx
+#FST.Unweight[nObs:7362641]:0.012240 Fst.Weight:0.022469
+
+../misc/realSFS fst stats Lower Keys-shallow.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:7255563]:0.032566 Fst.Weight:0.121322
+
+../misc/realSFS fst stats Lower Keys-shallow.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7307584]:0.033242 Fst.Weight:0.134973
+
+../misc/realSFS fst stats TER-North-Meso.TER-North-Shallow.fst.idx
+#FST.Unweight[nObs:7532626]:0.015191 Fst.Weight:0.030638
+
+../misc/realSFS fst stats TER-North-Meso.TER-South-Meso.fst.idx
+#FST.Unweight[nObs:7723254]:0.015311 Fst.Weight:0.036193
+
+../misc/realSFS fst stats TER-North-Meso.TER-South-Shallow.fst.idx
+#FST.Unweight[nObs:7269843]:0.024419 Fst.Weight:0.077586
+
+../misc/realSFS fst stats TER-North-Meso.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:7498766]:0.016821 Fst.Weight:0.038018
+
+../misc/realSFS fst stats TER-North-Meso.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7595785]:0.016778 Fst.Weight:0.045043
+
+../misc/realSFS fst stats TER-North-Shallow.TER-South-Meso.fst.idx
+#FST.Unweight[nObs:7791134]:0.019739 Fst.Weight:0.066106
+
+../misc/realSFS fst stats TER-North-Shallow.TER-South-Shallow.fst.idx
+#FST.Unweight[nObs:7433270]:0.016753 Fst.Weight:0.036125
+
+../misc/realSFS fst stats TER-North-Shallow.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:7576604]:0.021058 Fst.Weight:0.065665
+
+../misc/realSFS fst stats TER-North-Shallow.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7406283]:0.023794 Fst.Weight:0.082044
+
+../misc/realSFS fst stats TER-South-Meso.TER-South-Shallow.fst.idx
+#FST.Unweight[nObs:7385833]:0.029774 Fst.Weight:0.123724
+
+../misc/realSFS fst stats TER-South-Meso.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:7714984]:0.011621 Fst.Weight:0.016607
+
+../misc/realSFS fst stats TER-South-Meso.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7727503]:0.011578 Fst.Weight:0.021950
+
+../misc/realSFS fst stats TER-South-Shallow.Upper-Keys-Meso.fst.idx
+#FST.Unweight[nObs:7195893]:0.034130 Fst.Weight:0.128870
+
+../misc/realSFS fst stats TER-South-Shallow.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7185878]:0.036020 Fst.Weight:0.151568
+
+../misc/realSFS fst stats Upper-Keys-Meso.Upper-Keys-Shallow.fst.idx
+#FST.Unweight[nObs:7370535]:0.013362 Fst.Weight:0.021280
