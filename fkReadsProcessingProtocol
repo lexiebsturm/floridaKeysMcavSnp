@@ -698,6 +698,16 @@ realsfs2dadi.pl dadiout67 25 32 6 7 >67pops_dadi.data
 
 ###Must be done in a conda environment
 #Moments Analysis
+module load anaconda/2/2019.03
+conda create -n moments python=2.7
+source activate moments
+
+cd ~/bin/moments
+conda intsall --file requirements.txt
+python import moments
+source deactivate
+
+cd ~/2bRAD/floridaKeys/fkSFSAnalysisSfilt
 
 nano 2dAFS.sh
 
