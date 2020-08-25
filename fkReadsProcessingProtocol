@@ -654,7 +654,9 @@ chmod +x dadiOut.sh
 #pop7=Upper-Keys-Shallow, 32
 
 # converting to dadi-snp format understood by dadi an Moments:
-# (numbers after the input file name are numbers of individuals sampled per population)
+# I updated the perl script to change the population id column names to match the pairwise comparisons
+# numbers after the input file name [4 numbers total] are numbers of individuals sampled per population[ARGV0, ARGV1] followed the population id numbers [ARGV2, ARGV3]
+# e.g. "realsfs2dadi.pl dadiout01 13 30 0 1 >01pops_dadi.data" = 13 samples, 30 samples, pop0, pop1
 
 nano realsfs2dadi.sh
 
