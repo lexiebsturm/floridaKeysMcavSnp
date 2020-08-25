@@ -645,7 +645,7 @@ chmod +x dadiOut.sh
 ./dadiOut.sh
 
 #pop0=Lower Keys-Meso, 13
-#pop1=Lower Keys-shallow, 30
+#pop1=Lower Keys-Shallow, 30
 #pop2=TER-North-Meso, 23
 #pop3=TER-North-shallow, 27
 #pop4=TER-South-Meso, 37
@@ -656,6 +656,8 @@ chmod +x dadiOut.sh
 # converting to dadi-snp format understood by dadi an Moments:
 # (numbers after the input file name are numbers of individuals sampled per population)
 
+nano realsfs2dadi.sh
+
 #!/bin/sh
 #SBATCH --partition shortq7
 #SBATCH --nodes 1
@@ -663,65 +665,78 @@ chmod +x dadiOut.sh
 #SBATCH --mail-type=all
 #SBATCH --mail-user=asturm2017@fau.edu
 
-realsfs2dadi.pl dadiout01 13 30 >01pops_dadi.data
-realsfs2dadi.pl dadiout02 13 23 >02pops_dadi.data
-realsfs2dadi.pl dadiout03 13 27 >03pops_dadi.data
-realsfs2dadi.pl dadiout04 13 37 >04pops_dadi.data
-realsfs2dadi.pl dadiout05 13 28 >05pops_dadi.data
-realsfs2dadi.pl dadiout06 13 25 >06pops_dadi.data
-realsfs2dadi.pl dadiout07 13 32 >07pops_dadi.data
-realsfs2dadi.pl dadiout12 30 23 >12pops_dadi.data
-realsfs2dadi.pl dadiout13 30 27 >13pops_dadi.data
-realsfs2dadi.pl dadiout14 30 37 >14pops_dadi.data
-realsfs2dadi.pl dadiout15 30 28 >15pops_dadi.data
-realsfs2dadi.pl dadiout16 30 25 >16pops_dadi.data
-realsfs2dadi.pl dadiout17 30 32 >17pops_dadi.data
-realsfs2dadi.pl dadiout23 23 27 >23pops_dadi.data
-realsfs2dadi.pl dadiout24 23 37 >24pops_dadi.data
-realsfs2dadi.pl dadiout25 23 28 >25pops_dadi.data
-realsfs2dadi.pl dadiout26 23 25 >26pops_dadi.data
-realsfs2dadi.pl dadiout27 23 32 >27pops_dadi.data
-realsfs2dadi.pl dadiout34 27 37 >34pops_dadi.data
-realsfs2dadi.pl dadiout35 27 28 >35pops_dadi.data
-realsfs2dadi.pl dadiout36 27 25 >36pops_dadi.data
-realsfs2dadi.pl dadiout37 27 32 >37pops_dadi.data
-realsfs2dadi.pl dadiout45 37 28 >45pops_dadi.data
-realsfs2dadi.pl dadiout46 37 25 >46pops_dadi.data
-realsfs2dadi.pl dadiout47 37 32 >47pops_dadi.data
-realsfs2dadi.pl dadiout56 28 25 >56pops_dadi.data
-realsfs2dadi.pl dadiout57 28 32 >57pops_dadi.data
-realsfs2dadi.pl dadiout67 25 32 >67pops_dadi.data
+realsfs2dadi.pl dadiout01 13 30 0 1 >01pops_dadi.data
+realsfs2dadi.pl dadiout02 13 23 0 2 >02pops_dadi.data
+realsfs2dadi.pl dadiout03 13 27 0 3 >03pops_dadi.data
+realsfs2dadi.pl dadiout04 13 37 0 4 >04pops_dadi.data
+realsfs2dadi.pl dadiout05 13 28 0 5 >05pops_dadi.data
+realsfs2dadi.pl dadiout06 13 25 0 6 >06pops_dadi.data
+realsfs2dadi.pl dadiout07 13 32 0 7 >07pops_dadi.data
+realsfs2dadi.pl dadiout12 30 23 1 2 >12pops_dadi.data
+realsfs2dadi.pl dadiout13 30 27 1 3 >13pops_dadi.data
+realsfs2dadi.pl dadiout14 30 37 1 4 >14pops_dadi.data
+realsfs2dadi.pl dadiout15 30 28 1 5 >15pops_dadi.data
+realsfs2dadi.pl dadiout16 30 25 1 6 >16pops_dadi.data
+realsfs2dadi.pl dadiout17 30 32 1 7 >17pops_dadi.data
+realsfs2dadi.pl dadiout23 23 27 2 3 >23pops_dadi.data
+realsfs2dadi.pl dadiout24 23 37 2 4 >24pops_dadi.data
+realsfs2dadi.pl dadiout25 23 28 2 5 >25pops_dadi.data
+realsfs2dadi.pl dadiout26 23 25 2 6 >26pops_dadi.data
+realsfs2dadi.pl dadiout27 23 32 2 7 >27pops_dadi.data
+realsfs2dadi.pl dadiout34 27 37 3 4 >34pops_dadi.data
+realsfs2dadi.pl dadiout35 27 28 3 5 >35pops_dadi.data
+realsfs2dadi.pl dadiout36 27 25 3 6 >36pops_dadi.data
+realsfs2dadi.pl dadiout37 27 32 3 7 >37pops_dadi.data
+realsfs2dadi.pl dadiout45 37 28 4 5 >45pops_dadi.data
+realsfs2dadi.pl dadiout46 37 25 4 6 >46pops_dadi.data
+realsfs2dadi.pl dadiout47 37 32 4 7 >47pops_dadi.data
+realsfs2dadi.pl dadiout56 28 25 5 6 >56pops_dadi.data
+realsfs2dadi.pl dadiout57 28 32 5 7 >57pops_dadi.data
+realsfs2dadi.pl dadiout67 25 32 6 7 >67pops_dadi.data
 
 ###Must be done in a conda environment
 #Moments Analysis
-module load anaconda/2
+
+nano 2dAFS.sh
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=2dAFS
+#SBATCH --output=2dAFS-%j.out
+#SBATCH --error=2dAFS-%j.err
+
+module load anaconda/2/2019.03
 source activate moments
 
-srun 2dAFS_fold.py 01pops_dadi.data pop0 pop1 11 27
-srun 2dAFS_fold.py 02pops_dadi.data pop0 pop2 11 20 #error
-srun 2dAFS_fold.py 03pops_dadi.data pop0 pop3 11 24
-srun 2dAFS_fold.py 04pops_dadi.data pop0 pop4 11 33
-srun 2dAFS_fold.py 05pops_dadi.data pop0 pop5 11 25
-srun 2dAFS_fold.py 06pops_dadi.data pop0 pop6 11 22
-srun 2dAFS_fold.py 07pops_dadi.data pop0 pop7 11 28
-srun 2dAFS_fold.py 12pops_dadi.data pop1 pop2 27 20
-srun 2dAFS_fold.py 13pops_dadi.data pop1 pop3 27 24
-srun 2dAFS_fold.py 14pops_dadi.data pop1 pop4 27 33
-srun 2dAFS_fold.py 15pops_dadi.data pop1 pop5 27 25
-srun 2dAFS_fold.py 16pops_dadi.data pop1 pop6 27 22
-srun 2dAFS_fold.py 17pops_dadi.data pop1 pop7 27 28
-srun 2dAFS_fold.py 23pops_dadi.data pop2 pop3 20 24
-srun 2dAFS_fold.py 24pops_dadi.data pop2 pop4 20 33
-srun 2dAFS_fold.py 25pops_dadi.data pop2 pop5 20 25
-srun 2dAFS_fold.py 26pops_dadi.data pop2 pop6 20 22
-srun 2dAFS_fold.py 27pops_dadi.data pop2 pop7 20 28
-srun 2dAFS_fold.py 34pops_dadi.data pop3 pop4 24 33
-srun 2dAFS_fold.py 35pops_dadi.data pop3 pop5 24 25
-srun 2dAFS_fold.py 36pops_dadi.data pop3 pop6 24 22
-srun 2dAFS_fold.py 37pops_dadi.data pop3 pop7 24 28
-srun 2dAFS_fold.py 45pops_dadi.data pop4 pop5 33 25
-srun 2dAFS_fold.py 46pops_dadi.data pop4 pop6 33 22
-srun 2dAFS_fold.py 47pops_dadi.data pop4 pop7 33 28
-srun 2dAFS_fold.py 56pops_dadi.data pop5 pop6 25 22
-srun 2dAFS_fold.py 57pops_dadi.data pop5 pop7 25 28
-srun 2dAFS_fold.py 67pops_dadi.data pop6 pop7 22 28
+2dAFS_fold.py 01pops_dadi.data pop0 pop1 11 27
+2dAFS_fold.py 02pops_dadi.data pop0 pop2 11 20
+2dAFS_fold.py 03pops_dadi.data pop0 pop3 11 24
+2dAFS_fold.py 04pops_dadi.data pop0 pop4 11 33
+2dAFS_fold.py 05pops_dadi.data pop0 pop5 11 25
+2dAFS_fold.py 06pops_dadi.data pop0 pop6 11 22
+2dAFS_fold.py 07pops_dadi.data pop0 pop7 11 28
+2dAFS_fold.py 12pops_dadi.data pop1 pop2 27 20
+2dAFS_fold.py 13pops_dadi.data pop1 pop3 27 24
+2dAFS_fold.py 14pops_dadi.data pop1 pop4 27 33
+2dAFS_fold.py 15pops_dadi.data pop1 pop5 27 25
+2dAFS_fold.py 16pops_dadi.data pop1 pop6 27 22
+2dAFS_fold.py 17pops_dadi.data pop1 pop7 27 28
+2dAFS_fold.py 23pops_dadi.data pop2 pop3 20 24
+2dAFS_fold.py 24pops_dadi.data pop2 pop4 20 33
+2dAFS_fold.py 25pops_dadi.data pop2 pop5 20 25
+2dAFS_fold.py 26pops_dadi.data pop2 pop6 20 22
+2dAFS_fold.py 27pops_dadi.data pop2 pop7 20 28
+2dAFS_fold.py 34pops_dadi.data pop3 pop4 24 33
+2dAFS_fold.py 35pops_dadi.data pop3 pop5 24 25
+2dAFS_fold.py 36pops_dadi.data pop3 pop6 24 22
+2dAFS_fold.py 37pops_dadi.data pop3 pop7 24 28
+2dAFS_fold.py 45pops_dadi.data pop4 pop5 33 25
+2dAFS_fold.py 46pops_dadi.data pop4 pop6 33 22
+2dAFS_fold.py 47pops_dadi.data pop4 pop7 33 28
+2dAFS_fold.py 56pops_dadi.data pop5 pop6 25 22
+2dAFS_fold.py 57pops_dadi.data pop5 pop7 25 28
+2dAFS_fold.py 67pops_dadi.data pop6 pop7 22 28
