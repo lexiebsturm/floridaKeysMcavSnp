@@ -814,3 +814,42 @@ scp /Users/student/Documents/GitHub/floridaKeysMcavSnp/data/inds2popsNoClonesPop
 #Log back in and go to working directory
 
 srun populations -V ./fkMcavNoClonesRenamed.vcf.gz -O . -M ./inds2popsNoClonesPopDepth.txt --fstats --fst_correction p_value --p_value_cutoff 0.05 --smooth --bootstrap --bootstrap-reps 9999
+
+################################################################################
+mkdir bayescan
+cd bayescan
+srun cp ../stacks/fkMcavNoClonesRenamed.vcf.gz .
+srun cp ../stacks/inds2popsNoClonesPopDepth.txt .
+
+echo "############
+# VCF Parser questions
+PARSER_FORMAT=VCF
+# Do you want to include a file with population definitions?
+VCF_PARSER_POP_QUESTION=true
+# Only input following regions (refSeqName:start:end, multiple regions: whitespace separated):
+VCF_PARSER_REGION_QUESTION=
+# What is the ploidy of the data?
+VCF_PARSER_PLOIDY_QUESTION=DIPLOID
+# Only output following individuals (ind1, ind2, ind4, ...):
+VCF_PARSER_IND_QUESTION=
+# Output genotypes as missing if the read depth of a position for the sample is below:
+VCF_PARSER_READ_QUESTION=
+# Take most likely genotype if "PL" or "GL" is given in the genotype field?
+VCF_PARSER_PL_QUESTION=true
+# Do you want to exclude loci with only missing data?
+VCF_PARSER_EXC_MISSING_LOCI_QUESTION=false
+# Select population definition file:
+VCF_PARSER_POP_FILE_QUESTION=./bspops.txt
+# Only output SNPs with a phred-scaled quality of at least:
+VCF_PARSER_QUAL_QUESTION=
+# Do you want to include non-polymorphic SNPs?
+VCF_PARSER_MONOMORPHIC_QUESTION=false
+# Output genotypes as missing if the phred-scale genotype quality is below:
+VCF_PARSER_GTQUAL_QUESTION=
+# GESTE / BayeScan Writer questions
+WRITER_FORMAT=GESTE_BAYE_SCAN
+# Specify which data type should be included in the GESTE / BayeScan file  (GESTE / BayeScan can only analyze one data type per file):
+GESTE_BAYE_SCAN_WRITER_DATA_TYPE_QUESTION=SNP
+############" >vcf2bayescan.spid
+
+java -Xmx1024m -Xms512m -jar ~/bin/PGDSpider_2.0.7.1/PGDSpider2-cli.jar -inputfile fkMcavNoClonesRenamed.vcf -outputfile fkMcav.bayescan -spid vcf2bayescan.spid

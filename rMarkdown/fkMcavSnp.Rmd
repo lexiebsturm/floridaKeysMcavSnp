@@ -411,3 +411,101 @@ zooxPlot = zooxPlotA + theme(
   legend.text = element_text(face = "italic"))
 zooxPlot
 ```
+
+```{r, mantelTest}
+# Isolation by distance
+ReplaceLowerOrUpperTriangle = function(m, triangle.to.replace) {
+  if (nrow(m) != ncol(m))
+    stop("Supplied matrix must be square.")
+  if (tolower(triangle.to.replace) == "lower")
+    tri = lower.tri(m)
+  else if (tolower(triangle.to.replace) == "upper")
+    tri = upper.tri(m)
+  else
+    stop("triangle.to.replace must be set to 'lower' or 'upper'.")
+  m[tri] = t(m)[tri]
+  return(m)
+}
+  # If triangle.to.replace="lower", replaces the lower triangle of a square matrix with its upper triangle.
+  # If triangle.to.replace="upper", replaces the upper triangle of a square matrix with its lower triangle.
+
+GeoDistanceInMetresMatrix = function(df.geopoints) {
+  # Returns a matrix (M) of distances between geographic points. M[i,j] = M[j,i] = Distance between (df.geopoints$lat[i], df.geopoints$lon[i]) and (df.geopoints$lat[j], df.geopoints$lon[j]). The row and column names are given by df.geopoints$name.
+  
+  GeoDistanceInMetres = function(g1, g2) {
+    # Returns a vector of distances. (But if g1$index > g2$index, returns zero.) The 1st value in the returned vector is the distance between g1[[1]] and g2[[1]]. The 2nd value in the returned vector is the distance between g1[[2]] and g2[[2]]. Etc. Each g1[[x]] or g2[[x]] must be a list with named elements "index", "lat" and "lon". E.g. g1 = list(list("index"=1, "lat"=12.1, "lon"=10.1), list("index"=3, "lat"=12.1, "lon"=13.2))
+    
+    DistM = function(g1, g2) {
+      require("Imap")
+      return(ifelse(
+        g1$index > g2$index,
+        0,
+        gdist(lat.1 = g1$lat, lon.1 = g1$lon, lat.2 = g2$lat, lon.2 = g2$lon, units = "m")))
+    }
+    return(mapply(DistM, g1, g2))
+  }
+  
+  n.geopoints = nrow(df.geopoints)
+  
+  # The index column is used to ensure we only do calculations for the upper triangle of points
+  df.geopoints$index = 1:n.geopoints
+  
+  # Create a list of lists
+  list.geopoints = by(df.geopoints[, c("index", "lat", "lon")], 1:n.geopoints, function(x) {
+    return(list(x))
+  })
+  
+  # Get a matrix of distances (in metres)
+  mat.distances = ReplaceLowerOrUpperTriangle(outer(list.geopoints, list.geopoints, GeoDistanceInMetres), "lower")
+  
+  # Set the row and column names
+  rownames(mat.distances) = df.geopoints$name
+  colnames(mat.distances) = df.geopoints$name
+  return(mat.distances)}
+
+snpNeiDist = as.dist(stamppNeisD(fkGenlightPopDepth, pop = TRUE), diag = F)
+coords = read.csv("fkXYcoords.csv", header=TRUE) # tab-separated file for all pops
+dGeo = as.dist(GeoDistanceInMetresMatrix(coords)/1000, diag = T)
+
+# Test IBD
+set.seed(694)
+snpIBD = mantel.randtest(dGeo,snpNeiDist)
+snpIBD
+snpNei =  melt(as.matrix(snpNeiDist), varnames = c("row", "col"), value.name = "nei")
+snpNei = snpNei[snpNei$row != snpNei$col,]
+
+geo = melt(as.matrix(dGeo), varnames = c("row", "col"), value.name = "geo")
+geo = geo[geo$row != geo$col,]
+
+snpMantelDF = data.frame(cbind(snpNei$nei, geo$geo))
+colnames(snpMantelDF) = c("nei", "geo")
+
+snpMantelA = ggplot(data = snpMantelDF, aes(x = geo, y = nei)) +
+  scale_fill_gradientn(colors = paletteer_d("wesanderson::Zissou1")) +
+  stat_density_2d(aes(fill = stat(density)), n = 300, contour = FALSE, geom = "raster") +
+  geom_smooth(method = lm, col = "black", fill = "gray40", fullrange = TRUE) +
+  geom_point(shape = 21, fill = "gray40") +
+  scale_x_continuous(limits = c(0,1000), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.15), breaks = seq(0,0.15, by = 0.05), expand = c(0,0)) +
+  annotate("label", x = 775, y = 0.14325, 
+           label = paste("r = ", round(snpIBD$obs, 3), "; p = ", snpIBD$pvalue), 
+           size = 4, alpha = 0.6) +             
+  labs(x = "Geographic distance (km)", y = expression(paste("Nei's genetic distance (",italic("D"),")"))) +
+  ggtitle("SNP") +
+  theme_bw()
+
+snpMantel = snpMantelA + theme(
+  axis.title.x = element_blank(),
+  axis.text.x = element_text(size = 12, color = "black"),
+  axis.ticks.x = element_line(color = "black"),
+  axis.line.x = element_blank(),
+  axis.title.y = element_text(color = "white"),
+  axis.text.y = element_text(size = 12, color = "black"),
+  axis.ticks.y = element_line(color = "black"),
+  axis.line.y = element_blank(),
+  panel.border = element_rect(size = 1.2, color = "black"),
+  plot.margin = margin(0.2,0.5,0.1,0.1, unit = "cm"),
+  legend.position = "none")
+
+snpMantel
+```
