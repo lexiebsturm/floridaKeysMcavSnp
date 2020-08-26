@@ -352,10 +352,10 @@ ggsave("../figures/admixturePlot.tiff", plot = p2, width = 30, height = 15, unit
 ```{r, zooxDepth, eval = F}
 install.packages("moments")
 library(moments)
-zooxProportions=read.csv("zooxProportions.csv", header=TRUE)
-skewness(zooxProportions$fracZ, na.rm = TRUE)
+zooxHostProportions=read.csv("zooxHostProportions.csv", header=TRUE)
+skewness(zooxHostProportions$fracZ, na.rm = TRUE)
 
-zooxDepthPlot=ggplot(zooxProportions, aes(x=depth, y=fracZ)) +
+zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=fracZ)) +
   geom_point()+
   geom_smooth(method = "lm")
 
@@ -364,19 +364,19 @@ zooxDepthPlot
 install.packages("car")
 library(car)
 
-leveneTest(fracZ ~ site*depthZone, data = zooxProportions)
-res.aov3 <- aov(fracZ ~ site * depthZone, data = zooxProportions)
-shapiro.test(zooxProportions$fracZ)
+leveneTest(fracZ ~ site*depthZone, data = zooxHostProportions)
+res.aov3 <- aov(fracZ ~ site * depthZone, data = zooxHostProportions)
+shapiro.test(zooxHostProportions$fracZ)
 residualplot=plot(res.aov3, 2)
-zooxAnova <- aov(fracZ ~ site * depthZone, data = zooxProportions)
+zooxAnova <- aov(fracZ ~ site * depthZone, data = zooxHostProportions)
 Anova(zooxAnova, type = "III")
 
-zooxBoxPlot=ggplot(zooxProportions, aes(x=site, y=fracZ, fill=depthZone)) +
+zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=fracZ, fill=depthZone)) +
   geom_boxplot()
 
 #Zoox Plot
 
-dfZoox = read.csv("zooxProportionsUpdated.csv")
+dfZoox = read.csv("zooxCommunity.csv")
 dfZoox$Order = c(1:nrow(dfZoox))
 
 zDat = melt(dfZoox, id.vars = c("Sample", "Population", "Order"), variable.name = "Symbiont", value.name = "Fraction")
@@ -384,15 +384,12 @@ colPalZoox = brewer.pal(4, "BrBG")
 names(colPalZoox) = levels(zDat$Symbiont)
 
 zooxPlotA = ggplot(data = zDat, aes(x = Order, y = Fraction, fill = Symbiont, order = Order)) +
-  geom_bar(stat = "identity", position = "fill", width = 1, colour = "grey25") +
+  geom_bar(stat = "identity", position = "fill", colour = "grey25", width = 1) +
   xlab("Population") +
   scale_x_discrete(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0), labels = function(x) paste0(x*100, "%")) +
   scale_fill_manual(values = colPalZoox, name = "Symbiodiniaceae genus") +
-  scale_color_brewer(palette = "Dark2") +
   facet_grid(.~fct_inorder(Population), scales = "free", switch = "x", space = "free") +
-  coord_cartesian(ylim = c(-.01,1.01), clip = "off") +
-  guides(color = FALSE) +
   theme_bw()
 
 zooxPlot = zooxPlotA + theme(
