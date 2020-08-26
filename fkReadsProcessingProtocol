@@ -503,8 +503,6 @@ nano fst.sh #between the carrots put:
 chmod +x fst.sh
 ./fst.sh
 
-
-
 #Run for each pop comparison index file
 ../misc/realSFS fst stats pop1.pop2.fst.idx
 
@@ -703,7 +701,7 @@ conda create -n moments python=2.7
 source activate moments
 
 cd ~/bin/moments
-conda intsall --file requirements.txt
+conda install --file requirements.txt
 python import moments
 source deactivate
 
@@ -724,34 +722,36 @@ nano 2dAFS.sh
 module load anaconda/2/2019.03
 source activate moments
 
-2dAFS_fold.py 01pops_dadi.data pop0 pop1 11 27
-2dAFS_fold.py 02pops_dadi.data pop0 pop2 11 20
-2dAFS_fold.py 03pops_dadi.data pop0 pop3 11 24
-2dAFS_fold.py 04pops_dadi.data pop0 pop4 11 33
-2dAFS_fold.py 05pops_dadi.data pop0 pop5 11 25
-2dAFS_fold.py 06pops_dadi.data pop0 pop6 11 22
-2dAFS_fold.py 07pops_dadi.data pop0 pop7 11 28
-2dAFS_fold.py 12pops_dadi.data pop1 pop2 27 20
-2dAFS_fold.py 13pops_dadi.data pop1 pop3 27 24
-2dAFS_fold.py 14pops_dadi.data pop1 pop4 27 33
-2dAFS_fold.py 15pops_dadi.data pop1 pop5 27 25
-2dAFS_fold.py 16pops_dadi.data pop1 pop6 27 22
-2dAFS_fold.py 17pops_dadi.data pop1 pop7 27 28
-2dAFS_fold.py 23pops_dadi.data pop2 pop3 20 24
-2dAFS_fold.py 24pops_dadi.data pop2 pop4 20 33
-2dAFS_fold.py 25pops_dadi.data pop2 pop5 20 25
-2dAFS_fold.py 26pops_dadi.data pop2 pop6 20 22
-2dAFS_fold.py 27pops_dadi.data pop2 pop7 20 28
-2dAFS_fold.py 34pops_dadi.data pop3 pop4 24 33
-2dAFS_fold.py 35pops_dadi.data pop3 pop5 24 25
-2dAFS_fold.py 36pops_dadi.data pop3 pop6 24 22
-2dAFS_fold.py 37pops_dadi.data pop3 pop7 24 28
-2dAFS_fold.py 45pops_dadi.data pop4 pop5 33 25
-2dAFS_fold.py 46pops_dadi.data pop4 pop6 33 22
-2dAFS_fold.py 47pops_dadi.data pop4 pop7 33 28
-2dAFS_fold.py 56pops_dadi.data pop5 pop6 25 22
-2dAFS_fold.py 57pops_dadi.data pop5 pop7 25 28
-2dAFS_fold.py 67pops_dadi.data pop6 pop7 22 28
+#numbers after pops are 2 x number of individuals per pop x 0.9
+
+2dAFS_fold.py 01pops_dadi.data pop0 pop1 23 54
+2dAFS_fold.py 02pops_dadi.data pop0 pop2 23 41
+2dAFS_fold.py 03pops_dadi.data pop0 pop3 23 48
+2dAFS_fold.py 04pops_dadi.data pop0 pop4 23 66
+2dAFS_fold.py 05pops_dadi.data pop0 pop5 23 50
+2dAFS_fold.py 06pops_dadi.data pop0 pop6 23 45
+2dAFS_fold.py 07pops_dadi.data pop0 pop7 23 57
+2dAFS_fold.py 12pops_dadi.data pop1 pop2 54 41
+2dAFS_fold.py 13pops_dadi.data pop1 pop3 54 48
+2dAFS_fold.py 14pops_dadi.data pop1 pop4 54 66
+2dAFS_fold.py 15pops_dadi.data pop1 pop5 54 50
+2dAFS_fold.py 16pops_dadi.data pop1 pop6 54 45
+2dAFS_fold.py 17pops_dadi.data pop1 pop7 54 57
+2dAFS_fold.py 23pops_dadi.data pop2 pop3 41 48
+2dAFS_fold.py 24pops_dadi.data pop2 pop4 41 66
+2dAFS_fold.py 25pops_dadi.data pop2 pop5 41 50
+2dAFS_fold.py 26pops_dadi.data pop2 pop6 41 45
+2dAFS_fold.py 27pops_dadi.data pop2 pop7 41 57
+2dAFS_fold.py 34pops_dadi.data pop3 pop4 48 66
+2dAFS_fold.py 35pops_dadi.data pop3 pop5 48 50
+2dAFS_fold.py 36pops_dadi.data pop3 pop6 48 45
+2dAFS_fold.py 37pops_dadi.data pop3 pop7 48 57
+2dAFS_fold.py 45pops_dadi.data pop4 pop5 66 50
+2dAFS_fold.py 46pops_dadi.data pop4 pop6 66 45
+2dAFS_fold.py 47pops_dadi.data pop4 pop7 66 57
+2dAFS_fold.py 56pops_dadi.data pop5 pop6 50 45
+2dAFS_fold.py 57pops_dadi.data pop5 pop7 50 57
+2dAFS_fold.py 67pops_dadi.data pop6 pop7 45 57
 
 # ------ multimodel inference: fit a diversity of 2-population models, then select the best one based on AIC.
 # there are models with a period of exponential growth ("IM" models), models with one, two or three different size and/or migration rate epochs ("SC" models, including models with no migration in some epochs), models with symmetrical migration ("sm" models, in other cases migration is asymmetrical), models with two types of genomic loci ("genomic islands") introgressing at different rates ("i" models), and some fun combinations thereof.
@@ -763,6 +763,8 @@ source activate moments
 # this HAS to be parallelized - we need to fit ~100 models 5 times to make sure each model converges at its best fit at least once.
 
 # copy the file ".../AFS-analysis-with-moments/multimodel_inference/allmodels_folded" to your working directory
+
+nano allmodels_folded
 
 # running all models on the same data NREPS times, to ensure convergence
 # input line: the last four numbers are:
@@ -800,3 +802,15 @@ cut -f 2,3,4,5 -d " " mmods.res >likes
 # - grep fitted model parameters and their SDs from *.mom files
 
 # the order of parameters are listed in files unfolded_params and folded_params. Typically pop size parameters are first, then times, then migration rates, then the fraction of genomic "islands" (in "i"  models), then percentage of misidentified ancestral states (in unfolded models).
+
+################################################################################
+mkdir stacks
+cp ~/2bRAD/floridaKeys/mcavANGSDNoClones/fkMcavNoClonesRenamed.vcf.gz ../stacks
+logout
+ #go to directory where inds2popsNoClonesPopDepth.txt is, ensure if this is saved as a csv to also save as a .txt file to retain the leading zeroes on sample names
+
+scp /Users/student/Documents/GitHub/floridaKeysMcavSnp/data/inds2popsNoClonesPopDepth.txt asturm2017@koko-login.hpc.fau.edu:/home/asturm2017/2bRAD/floridaKeys/stacks
+
+#Log back in and go to working directory
+
+srun populations -V ./fkMcavNoClonesRenamed.vcf.gz -O . -M ./inds2popsNoClonesPopDepth.txt --fstats --fst_correction p_value --p_value_cutoff 0.05 --smooth --bootstrap --bootstrap-reps 9999
