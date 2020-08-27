@@ -377,6 +377,10 @@ zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=fracZ, fill=depthZone)) +
 #Zoox Plot
 
 dfZoox = read.csv("zooxCommunity.csv")
+
+dfZoox$Population = factor(dfZoox$Population, levels = levels(dfZoox$Population)[c(6,5,4,3,2,1,8,7)])
+
+dfZoox = dfZoox[order(dfZoox$Population),]
 dfZoox$Order = c(1:nrow(dfZoox))
 
 zDat = melt(dfZoox, id.vars = c("Sample", "Population", "Order"), variable.name = "Symbiont", value.name = "Fraction")
@@ -384,29 +388,32 @@ colPalZoox = brewer.pal(4, "BrBG")
 names(colPalZoox) = levels(zDat$Symbiont)
 
 zooxPlotA = ggplot(data = zDat, aes(x = Order, y = Fraction, fill = Symbiont, order = Order)) +
-  geom_bar(stat = "identity", position = "fill", colour = "grey25", width = 1) +
+  geom_bar(stat = "identity", position = "stack", colour = "grey25", width = 1) +
   xlab("Population") +
   scale_x_discrete(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0), labels = function(x) paste0(x*100, "%")) +
   scale_fill_manual(values = colPalZoox, name = "Symbiodiniaceae genus") +
-  facet_grid(.~fct_inorder(Population), scales = "free", switch = "x", space = "free") +
+  coord_cartesian(ylim = c(-.01,1.01)) +
+  facet_grid(.~fct_inorder(Population), drop=TRUE, scales = "free", switch = "x", space = "free") +
   theme_bw()
 
-zooxPlot = zooxPlotA + theme(
-  plot.title = element_blank(),
-  panel.background = element_blank(),
-  panel.spacing.x = grid:::unit(0, "lines"),
-  panel.border = element_rect(color = "black", size = 2, linetype = "solid"),
-  axis.text.x=element_blank(),
-  axis.text.y=element_text(size = 12, color = "black"),
-  axis.title.x=element_text(size = 16),
-  axis.title.y = element_blank(),
+zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
+  panel.grid=element_blank(),
+  panel.background=element_rect(fill=NA, colour="grey25"),
+  panel.spacing.x=grid:::unit(0, "lines"),
+  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
+  #axis.text.x=element_text(size=12, angle=90)
+  axis.text.x = element_blank(),
   axis.ticks.x=element_blank(),
-  axis.ticks.y = element_line(color = "black"),
-  strip.text=element_text(size = 16, angle = 90, hjust = 1, vjust = 0, color = NA),
-  strip.background = element_blank(),
+  strip.background=element_blank(),
+  strip.text=element_text(size=12, angle=90),
+  legend.key=element_blank(),
+  legend.position = "none",
+  legend.title = element_blank(),
   legend.text = element_text(face = "italic"))
 zooxPlot
+
+ggsave("../figures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 15, units = "cm", dpi = 300)
 ```
 
 ```{r, mantelTest}
