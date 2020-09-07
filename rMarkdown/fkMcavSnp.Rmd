@@ -40,7 +40,7 @@ setwd('../data')
 For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
 ```{r, load packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA")
+pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr")
 ```
 
 # Figures and analyses
@@ -153,6 +153,16 @@ snpDend
 ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, units = "in", dpi = 300)
 ```
 
+## Heterozygosity
+```{r, hetero}
+hetero=read.csv("sampleHeterozygosity.csv")
+heteroStat <- ddply(hetero, c("popdepth"), summarise,
+               N    = length(Heterozygosity),
+               mean = mean(Heterozygosity),
+               sd   = sd(Heterozygosity),
+               se   = sd / sqrt(N))
+
+```
 ## PCoA with IBS
 ```{r, PCoA with IBS}
 snpMa = as.matrix(read.table("fkMcavNoClones.ibsMat"))
@@ -352,10 +362,12 @@ ggsave("../figures/admixturePlot.tiff", plot = p2, width = 30, height = 15, unit
 ```{r, zooxDepth, eval = F}
 install.packages("moments")
 library(moments)
-zooxHostProportions=read.csv("zooxHostProportions.csv", header=TRUE)
-skewness(zooxHostProportions$fracZ, na.rm = TRUE)
+zooxHostProportions=read.csv("zooxMcavRatio.csv", header=TRUE)
+skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
+zooxHostProportions$zooxReadRatio <- log10(zooxHostProportions$zooxReadRatio)
+skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
 
-zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=fracZ)) +
+zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=zooxReadRatio)) +
   geom_point()+
   geom_smooth(method = "lm")
 
@@ -364,15 +376,31 @@ zooxDepthPlot
 install.packages("car")
 library(car)
 
-leveneTest(fracZ ~ site*depthZone, data = zooxHostProportions)
-res.aov3 <- aov(fracZ ~ site * depthZone, data = zooxHostProportions)
-shapiro.test(zooxHostProportions$fracZ)
+leveneTest(zooxReadRatio ~ site*depthZone, data = zooxHostProportions)
+res.aov3 <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
+shapiro.test(zooxHostProportions$zooxReadRatio)
 residualplot=plot(res.aov3, 2)
-zooxAnova <- aov(fracZ ~ site * depthZone, data = zooxHostProportions)
+zooxAnova <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
 Anova(zooxAnova, type = "III")
+install.packages("multcompView")
+library(multcompView)
+install.packages("lsmeans")
+library(lsmeans)
 
-zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=fracZ, fill=depthZone)) +
+lsmeans = lsmeans::lsmeans ### Uses the lsmeans function
+                           ###  from the lsmeans package,
+                           ###  not from the lmerTest package
+
+leastsquare = lsmeans(zooxAnova,
+                      pairwise ~ site:depthZone,
+                      adjust="tukey")
+
+
+zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=zooxReadRatio, fill=depthZone)) +
   geom_boxplot()
+
+zooxBoxPlot
+
 
 #Zoox Plot
 
@@ -408,7 +436,7 @@ zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
   strip.background=element_blank(),
   strip.text=element_text(size=12, angle=90),
   legend.key=element_blank(),
-  legend.position = "none",
+  legend.position = "right",
   legend.title = element_blank(),
   legend.text = element_text(face = "italic"))
 zooxPlot
@@ -512,4 +540,182 @@ snpMantel = snpMantelA + theme(
   legend.position = "none")
 
 snpMantel
+```
+
+```{r, bayescanOutliers}
+source('plot_R.r')
+
+#install.packages("boa")
+library(boa)
+source('plot_R.r')
+dat=read.table("fkMcav.baye_fst.txt",header=T)
+head(dat)
+table(dat[,"qval"]<0.05)
+outs=which(dat[,"qval"]<0.05)
+plot_bayescan("fkMcav.baye_fst.txt",FDR=0.05,add_text=F,size=0.5,highlight=outs)
+
+fkVcfOuts = read.vcfR("fkVcfOutliers.vcf.gz")
+fkGenlightPopDepthOuts = vcfR2genlight(fkVcfOuts, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
+locNames(fkGenlightPopDepthOuts) = paste(fkVcfOuts@fix[,1],fkVcfOuts@fix[,2],sep="_")
+popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
+strata(fkGenlightPopDepthOuts) = data.frame(popData)
+setPop(fkGenlightPopDepthOuts) = ~popdepth
+amovaOuts <- poppr.amova(fkGenlightPopDepthOuts, ~popdepth) #Runs AMOVA
+amovaOuts
+set.seed(1999)
+amovasignifOuts <- randtest(amovaOuts, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
+amovasignifOuts
+
+fkGenlightPopDepthOuts$pop = factor(fkGenlightPopDepthOuts$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
+
+set.seed(694)
+fk.fstOuts <- stamppFst(fkGenlightPopDepthOuts, nboots = 99, percent = 95, nclusters = 4) #99 permutations
+fk.fstOuts$Fsts
+fk.fstOuts$Pvalues
+
+pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
+
+# reads in fst matrix
+snpFstMaOuts <- as.matrix(fk.fstOuts$Fsts)
+upperTriangle(snpFstMaOuts, byrow=TRUE) <- lowerTriangle(snpFstMaOuts)
+snpFstMaOuts <- snpFstMaOuts[,pop.order] %>%
+  .[pop.order,]
+snpFstMaOuts[upper.tri(snpFstMaOuts)] <- NA
+snpFstMaOuts <- as.data.frame(snpFstMaOuts)
+
+snpFstMaOuts$Pop = factor(row.names(snpFstMaOuts), levels = unique(pop.order))
+
+snpQMaOuts <- as.matrix(fk.fstOuts$Pvalues)
+upperTriangle(snpQMaOuts, byrow=TRUE) <- lowerTriangle(snpQMaOuts)
+snpQMaOuts <- snpQMaOuts[,pop.order] %>%
+  .[pop.order,]
+snpQMaOuts[upper.tri(snpQMaOuts)] <- NA
+snpQMaOuts <- as.data.frame(snpQMaOuts)
+snpQMaOuts$Pop = factor(row.names(snpQMaOuts), levels = unique(pop.order))
+
+snpFstMaOuts$Pop = factor(row.names(snpFstMaOuts), levels = unique(pop.order))
+snpFstOuts = melt(snpFstMaOuts, id.vars = "Pop", value.name = "Fst", variable.name = "Pop2", na.rm = TRUE)
+snpFstOuts = snpFstOuts[snpFstOuts$Pop != snpFstOuts$Pop2,]
+snpFstOuts$Fst = round(snpFstOuts$Fst, 3)
+snpFstOuts = snpFstOuts %>% mutate(Fst = replace(Fst, Fst < 0, 0))
+head(snpFstOuts)
+
+snpQOuts = melt(snpQMaOuts, id.vars = "Pop", value.name = "Pval", variable.name = "Pop2", na.rm = TRUE)
+snpQOuts = snpQOuts[snpQOuts$Pop != snpQOuts$Pop2,]
+snpQOuts$Qval = p.adjust(snpQOuts$Pval, method = "BH")
+head(snpQOuts)
+
+snpHeatmapAOuts = ggplot(data = snpFstOuts, aes(Pop, Pop2, fill = Fst))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.35),
+                       space = "Lab", name = expression(paste(italic("F")[ST])))+
+  geom_text(data = snpFstOuts, aes(Pop, Pop2, label = Fst), color = ifelse(snpQOuts$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQOuts$Qval < 0.05, 6, 5)) +
+  guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
+  scale_y_discrete(position = "right")+
+  scale_x_discrete(labels = str_wrap(snpFstOuts$Pop, width = 6)) +
+  #ggtitle("   SNP") +
+  theme_minimal()
+
+snpHeatmapOuts = snpHeatmapAOuts + theme(
+  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"),
+  axis.text.y = element_text(size = 16, color = "black"),
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.position = "right",
+  legend.direction = "vertical",
+  legend.title = element_text(size = 16),
+  legend.text = element_text(size = 14),
+  plot.title = element_text(size = 16)
+)
+
+snpHeatmapOuts
+
+ggsave("../figures/snpHeatMapOuts.tiff", plot = snpHeatmapOuts, width = 34, height = 15, units = "cm", dpi = 300)
+
+###Neutral SNPs Only
+fkVcfNeut = read.vcfR("fkVcfNeutral.vcf.gz")
+fkGenlightPopDepthNeut = vcfR2genlight(fkVcfNeut, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
+locNames(fkGenlightPopDepthNeut) = paste(fkVcfNeut@fix[,1],fkVcfNeut@fix[,2],sep="_")
+popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
+strata(fkGenlightPopDepthNeut) = data.frame(popData)
+setPop(fkGenlightPopDepthNeut) = ~popdepth
+amovaNeut <- poppr.amova(fkGenlightPopDepthNeut, ~popdepth) #Runs AMOVA
+amovaNeut
+set.seed(1999)
+amovasignifNeut <- randtest(amovaNeut, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
+amovasignifNeut
+
+fkGenlightPopDepthNeut$pop = factor(fkGenlightPopDepthNeut$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
+
+set.seed(694)
+fk.fstNeut <- stamppFst(fkGenlightPopDepthNeut, nboots = 99, percent = 95, nclusters = 4) #99 permutations
+fk.fstNeut$Fsts
+fk.fstNeut$Pvalues
+
+pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
+
+# reads in fst matrix
+snpFstMaNeut <- as.matrix(fk.fstNeut$Fsts)
+upperTriangle(snpFstMaNeut, byrow=TRUE) <- lowerTriangle(snpFstMaNeut)
+snpFstMaNeut <- snpFstMaNeut[,pop.order] %>%
+  .[pop.order,]
+snpFstMaNeut[upper.tri(snpFstMaNeut)] <- NA
+snpFstMaNeut <- as.data.frame(snpFstMaNeut)
+
+snpFstMaNeut$Pop = factor(row.names(snpFstMaNeut), levels = unique(pop.order))
+
+snpQMaNeut <- as.matrix(fk.fstNeut$Pvalues)
+upperTriangle(snpQMaNeut, byrow=TRUE) <- lowerTriangle(snpQMaNeut)
+snpQMaNeut <- snpQMaNeut[,pop.order] %>%
+  .[pop.order,]
+snpQMaNeut[upper.tri(snpQMaNeut)] <- NA
+snpQMaNeut <- as.data.frame(snpQMaNeut)
+snpQMaNeut$Pop = factor(row.names(snpQMaNeut), levels = unique(pop.order))
+
+snpFstMaNeut$Pop = factor(row.names(snpFstMaNeut), levels = unique(pop.order))
+snpFstNeut = melt(snpFstMaNeut, id.vars = "Pop", value.name = "Fst", variable.name = "Pop2", na.rm = TRUE)
+snpFstNeut = snpFstNeut[snpFstNeut$Pop != snpFstNeut$Pop2,]
+snpFstNeut$Fst = round(snpFstNeut$Fst, 3)
+snpFstNeut = snpFstNeut %>% mutate(Fst = replace(Fst, Fst < 0, 0))
+head(snpFstNeut)
+
+snpQNeut = melt(snpQMaNeut, id.vars = "Pop", value.name = "Pval", variable.name = "Pop2", na.rm = TRUE)
+snpQNeut = snpQNeut[snpQNeut$Pop != snpQNeut$Pop2,]
+snpQNeut$Qval = p.adjust(snpQNeut$Pval, method = "BH")
+head(snpQNeut)
+
+snpHeatmapANeut = ggplot(data = snpFstNeut, aes(Pop, Pop2, fill = Fst))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1),
+                       space = "Lab", name = expression(paste(italic("F")[ST])))+
+  geom_text(data = snpFstNeut, aes(Pop, Pop2, label = Fst), color = ifelse(snpQNeut$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQNeut$Qval < 0.05, 6, 5)) +
+  guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
+  scale_y_discrete(position = "right")+
+  scale_x_discrete(labels = str_wrap(snpFstNeut$Pop, width = 6)) +
+  #ggtitle("   SNP") +
+  theme_minimal()
+
+snpHeatmapNeut = snpHeatmapANeut + theme(
+  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"),
+  axis.text.y = element_text(size = 16, color = "black"),
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.position = "right",
+  legend.direction = "vertical",
+  legend.title = element_text(size = 16),
+  legend.text = element_text(size = 14),
+  plot.title = element_text(size = 16)
+)
+
+snpHeatmapNeut
+
+ggsave("../figures/snpHeatMapNeut.tiff", plot = snpHeatmapNeut, width = 34, height = 15, units = "cm", dpi = 300)
 ```

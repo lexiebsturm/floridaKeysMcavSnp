@@ -141,5 +141,5 @@ echo $ARGS >>args;
 done
 paste am args -d " " >ama
 
-launcher_creator.py -j ama -n ama -t 2:00:00 -e asturm2017@fau.edu -q shortq7
+launcher_creator.py -j ama -n ama -t 2:00:00 -e asturm2017@fau.edu -q shortq7 -N 5
 sbatch ama.slurm

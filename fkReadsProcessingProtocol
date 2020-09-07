@@ -223,6 +223,30 @@ ls *bam >bams
 
 #Archive these BAMS files
 
+for i in *.bam; do
+    echo $i >> output
+    samtools view $i | cut -f1 | sort | uniq | wc -l >> output
+done
+
+################################################################################
+mkdir zooxBams
+srun cp ./zooxSams/*.sam ./zooxBams
+
+#Compressing, sorting and indexing the SAM files, so they become BAM files:
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+launcher_creator.py -j s2b -n s2b -t 1:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
+sbatch s2b.slurm
+
+ls *bam >bams
+
+#Archive these BAMS files
+
+samtools idxstats *.bam
+
 ################################################################################
 mkdir mcavANGSDClones
 srun cp ./mcavBams/*bam* ./mcavANGSDClones/
@@ -345,21 +369,17 @@ module load gsl
 ngsLD --geno fkMcavNoClones.geno.gz --probs 1 --n_ind $NB --n_sites $NS --max_kb_dist 0 --pos mc1.sites --out fkMcavNoClones.LD --n_threads 12 --extend_out 1
 
 # individual heterozygosities (proportion of heterozygotes across SNPs that pass filters)
-##DID NOT WORK NEED TO TRY LATER
 Rscript ~/bin/heterozygosity_beagle.R fkMcavNoClones.beagle.gz
 
 #Relatedness
-FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
+FILTERS="-uniqueOnly 1 -remove_bads 1 -skipTriallelic 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
 
-TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doVcf 1 -doPost 1 -doGlf 3"
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGlf 3"
 
 # Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
 
 srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoClonesRelated
 
-
-##Sams counts?
-samtools view -c -F 260 *.sam > zooxSamCounts
 
 ##SFS Analysis
 FILTERS="-uniqueOnly 1 -remove_bads 1  -skipTriallelic 1 -minMapQ 20 -minQ 25 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162 "
@@ -404,14 +424,14 @@ srun angsd -sites sites2do -b pop6.bams -minInd 19 -GL 1 -P 1 $TODO -out pop6
 srun angsd -sites sites2do -b pop7.bams -minInd 24 -GL 1 -P 1 $TODO -out pop7
 
 # generating per-population SFS
-../misc/realSFS pop0.saf.idx >pop0.sfs
-../misc/realSFS pop1.saf.idx >pop1.sfs
-../misc/realSFS pop2.saf.idx >pop2.sfs
-../misc/realSFS pop3.saf.idx >pop3.sfs
-../misc/realSFS pop4.saf.idx >pop4.sfs
-../misc/realSFS pop5.saf.idx >pop5.sfs
-../misc/realSFS pop6.saf.idx >pop6.sfs
-../misc/realSFS pop7.saf.idx >pop7.sfs
+srun realSFS pop0.saf.idx >pop0.sfs
+srun realSFS pop1.saf.idx >pop1.sfs
+srun realSFS pop2.saf.idx >pop2.sfs
+srun realSFS pop3.saf.idx >pop3.sfs
+srun realSFS pop4.saf.idx >pop4.sfs
+srun realSFS pop5.saf.idx >pop5.sfs
+srun realSFS pop6.saf.idx >pop6.sfs
+srun realSFS pop7.saf.idx >pop7.sfs
 
 
 # generating dadi-like posterior counts based on sfs priors
@@ -818,8 +838,10 @@ srun populations -V ./fkMcavNoClonesRenamed.vcf.gz -O . -M ./inds2popsNoClonesPo
 ################################################################################
 mkdir bayescan
 cd bayescan
-srun cp ../stacks/fkMcavNoClonesRenamed.vcf.gz .
-srun cp ../stacks/inds2popsNoClonesPopDepth.txt .
+srun cp ../stacks/fkMcavNoClones.vcf.gz . #Note do not use the renamed version, pgdspider has a tough time parsing the samples into pops when you do
+srun gunzip fkMcavNoClones.vcf.gz
+
+#scp bspops.txt to koko
 
 echo "############
 # VCF Parser questions
@@ -852,4 +874,113 @@ WRITER_FORMAT=GESTE_BAYE_SCAN
 GESTE_BAYE_SCAN_WRITER_DATA_TYPE_QUESTION=SNP
 ############" >vcf2bayescan.spid
 
-java -Xmx1024m -Xms512m -jar ~/bin/PGDSpider_2.0.7.1/PGDSpider2-cli.jar -inputfile fkMcavNoClonesRenamed.vcf -outputfile fkMcav.bayescan -spid vcf2bayescan.spid
+java -Xmx1024m -Xms512m -jar ~/bin/PGDSpider_2.0.7.1/PGDSpider2-cli.jar -inputfile fkMcavNoClones.vcf -outputfile fkMcav.bayescan -spid vcf2bayescan.spid
+
+# launching bayescan (this might take 12-24 hours)
+srun bayescan fkMcav.bayescan -threads=20
+
+removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=extract > fkVcfOutliers.vcf
+
+removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=delete > fkVcfNeutral.vcf
+################################################################################
+#Calculating population parameters no filter on excess heterozygosity
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
+
+mkdir angsdPopStats
+srun cp ./fkSFSAnalysis/*bam* ./angsdPopStats #copy over all the bam files (clones removed) and the bam lists for each pop. Pop definitions are below
+
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
+
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -baq 1"
+TODO="-doSaf 1 -anc $GENOME_REF -ref $GENOME_REF"
+
+srun angsd -b pop0.bams -minInd 10 -GL 1 -P 1 $TODO $FILTERS -out pop0
+srun angsd -b pop1.bams -minInd 23 -GL 1 -P 1 $TODO $FILTERS -out pop1
+srun angsd -b pop2.bams -minInd 18 -GL 1 -P 1 $TODO $FILTERS -out pop2
+srun angsd -b pop3.bams -minInd 21 -GL 1 -P 1 $TODO $FILTERS -out pop3
+srun angsd -b pop4.bams -minInd 28 -GL 1 -P 1 $TODO $FILTERS -out pop4
+srun angsd -b pop5.bams -minInd 21 -GL 1 -P 1 $TODO $FILTERS -out pop5
+srun angsd -b pop6.bams -minInd 19 -GL 1 -P 1 $TODO $FILTERS -out pop6
+srun angsd -b pop7.bams -minInd 24 -GL 1 -P 1 $TODO $FILTERS -out pop7
+
+# generating per-population SFS
+nano sfs
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=sfs
+#SBATCH --output=sfs-%j.out
+#SBATCH --error=sfs-%j.err
+
+realSFS pop0.saf.idx >pop0.sfs
+realSFS pop1.saf.idx >pop1.sfs
+realSFS pop2.saf.idx >pop2.sfs
+realSFS pop3.saf.idx >pop3.sfs
+realSFS pop4.saf.idx >pop4.sfs
+realSFS pop5.saf.idx >pop5.sfs
+realSFS pop6.saf.idx >pop6.sfs
+realSFS pop7.saf.idx >pop7.sfs
+
+##Producing thetas
+
+nano theta
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=theta
+
+realSFS saf2theta pop0.saf.idx -sfs pop0.sfs -outname pop0
+thetaStat do_stat pop0.thetas.idx
+realSFS saf2theta pop1.saf.idx -sfs pop1.sfs -outname pop1
+thetaStat do_stat pop1.thetas.idx
+realSFS saf2theta pop2.saf.idx -sfs pop2.sfs -outname pop2
+thetaStat do_stat pop2.thetas.idx
+realSFS saf2theta pop3.saf.idx -sfs pop3.sfs -outname pop3
+thetaStat do_stat pop3.thetas.idx
+realSFS saf2theta pop4.saf.idx -sfs pop4.sfs -outname pop4
+thetaStat do_stat pop4.thetas.idx
+realSFS saf2theta pop5.saf.idx -sfs pop5.sfs -outname pop5
+thetaStat do_stat pop5.thetas.idx
+realSFS saf2theta pop6.saf.idx -sfs pop6.sfs -outname pop6
+thetaStat do_stat pop6.thetas.idx
+realSFS saf2theta pop7.saf.idx -sfs pop7.sfs -outname pop7
+thetaStat do_stat pop7.thetas.idx
+
+##Producing Heterozygosity
+nano hetero
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=hetero
+
+realSFS pop0.saf.idx >pop0.ml
+realSFS pop1.saf.idx >pop1.ml
+realSFS pop2.saf.idx >pop2.ml
+realSFS pop3.saf.idx >pop3.ml
+realSFS pop4.saf.idx >pop4.ml
+realSFS pop5.saf.idx >pop5.ml
+realSFS pop6.saf.idx >pop6.ml
+realSFS pop7.saf.idx >pop7.ml
