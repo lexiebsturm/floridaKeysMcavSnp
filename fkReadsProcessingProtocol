@@ -223,6 +223,7 @@ ls *bam >bams
 
 #Archive these BAMS files
 
+#Read counts
 for i in *.bam; do
     echo $i >> output
     samtools view $i | cut -f1 | sort | uniq | wc -l >> output
@@ -245,7 +246,11 @@ ls *bam >bams
 
 #Archive these BAMS files
 
-samtools idxstats *.bam
+#Read counts
+for i in *.bam; do
+    echo $i >> output
+    samtools view $i | cut -f1 | sort | uniq | wc -l >> output
+done
 
 ################################################################################
 mkdir mcavANGSDClones
@@ -333,8 +338,6 @@ do
 NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${K};
 done
 
-
-
 # alternatively, to use real ADMIXTURE on called SNPs (requires plink and ADMIXTURE):
 gunzip fkMcavNoClones.vcf.gz
 cat fkMcavNoClones.vcf | sed 's/xpSc//g' >fkMcavNoClones_chr.vcf
@@ -370,6 +373,7 @@ ngsLD --geno fkMcavNoClones.geno.gz --probs 1 --n_ind $NB --n_sites $NS --max_kb
 
 # individual heterozygosities (proportion of heterozygotes across SNPs that pass filters)
 Rscript ~/bin/heterozygosity_beagle.R fkMcavNoClones.beagle.gz
+#Prints individual heterozygosity
 
 #Relatedness
 FILTERS="-uniqueOnly 1 -remove_bads 1 -skipTriallelic 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
@@ -379,6 +383,10 @@ TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGl
 # Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
 
 srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoClonesRelated
+
+zcat fkMcavNoClonesRelated.mafs.gz | cut -f5 |sed 1d >freq
+NIND=`cat bamsNoClones | wc -l`
+srun ngsRelate -f freq -g fkMcavNoClonesRelated.glf.gz -n $NIND -z bamsNoClones -O relatednessValues
 
 
 ##SFS Analysis
@@ -984,3 +992,34 @@ realSFS pop4.saf.idx >pop4.ml
 realSFS pop5.saf.idx >pop5.ml
 realSFS pop6.saf.idx >pop6.ml
 realSFS pop7.saf.idx >pop7.ml
+
+#####################NEW SFS Analysis
+#Obtaining bootstrapped SFS with ANGSD
+#Here we obtain 100 series of 6 bootstrap replicates. For each of the series, we discard the first replicate (it is just the original data, according to ANGSD pundit Nate Pope) and average the remaining 5. This procedure is called "bagging" and is designed to mitigate the noise that ANGSD-derived SFS often show, especially for small datasets (i.e. RAD-seq). The resulting 100 "bagged" datasets are going to be our bootstrap replicates.
+
+#Let's assume we have two populations, p1 and p2, each with 10 sequenced individuals, and we have two text files, p1.bams and p2.bams, listing *.bam files for each population. First we need to collect sites (variable and invariable!) that pass our filters in both populations:
+
+mkdir sfsAnalysis
+cd sfsAnalysis *copy over bams files without clones
+
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
+GRate=0.75 # genotyping rate filter - a site must be genotyped in this fraction of all samples.
+cat pop0.bams pop1.bams > p01.bams
+
+FILTERS='-uniqueOnly 1 -skipTriallelic 1 -minMapQ 30 -minQ 30 -doHWE 1 -maxHetFreq 0.5 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd $MI'
+TODO='-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2'
+echo 'export NIND=`cat p01.bams | wc -l`; export MI=`echo "($NIND*$GRate+0.5)/1" | bc`' >calc
+source calc && angsd -b p01.bams -GL 1 -P 4 $FILTERS $TODO -out p01 &
+
+# wait a while...
+
+zcat p01.mafs.gz | cut -f 1,2 | tail -n +2 > goodsites
+angsd sites index goodsites
