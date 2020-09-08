@@ -548,10 +548,10 @@ source('plot_R.r')
 #install.packages("boa")
 library(boa)
 source('plot_R.r')
-dat=read.table("fkMcav.baye_fst.txt",header=T)
+dat = read.table("fkMcav.baye_fst.txt",header=T)
 head(dat)
-table(dat[,"qval"]<0.05)
-outs=which(dat[,"qval"]<0.05)
+table(dat[,"qval"]<0.1)
+outs=which(dat[,"qval"]<0.1)
 plot_bayescan("fkMcav.baye_fst.txt",FDR=0.05,add_text=F,size=0.5,highlight=outs)
 
 fkVcfOuts = read.vcfR("fkVcfOutliers.vcf.gz")
@@ -718,4 +718,41 @@ snpHeatmapNeut = snpHeatmapANeut + theme(
 snpHeatmapNeut
 
 ggsave("../figures/snpHeatMapNeut.tiff", plot = snpHeatmapNeut, width = 34, height = 15, units = "cm", dpi = 300)
+```
+
+## SNPs potentially under selection
+```{r, snps under selection}
+genes = read.table("mcav_gene_regions.tab")
+names(genes) = c("chromo","start","end","gene")
+
+# expand gene regions ± 2000 bp
+genes$start = genes$start -2000
+genes$end = genes$end +2000
+
+gnames = read.table("mcav_gnames.txt", sep = "\t")
+names(gnames) = c("gene", "protein")
+
+genes = full_join(genes, gnames, by = "gene")
+genes$protein=as.character(genes$protein)
+genes$protein[is.na(genes$protein)]="unknown"
+
+#how many annotated genes do we have?
+nrow(genes[genes$protein!="unknown",])
+head(genes)
+
+snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
+snpLoci$locus = c(1:nrow(snpLoci))
+
+outsByGene = snpLoci %>% 
+  select(locus, chromo, position) %>% 
+  filter(locus %in% outs) %>%
+  full_join(., genes, by = "chromo") %>% 
+  filter(position>start, position<end)
+
+outsByGene
+
+#only show annotated genes
+outsAnno = outsByGene %>% filter(protein != "unknown")
+outsAnno
+
 ```
