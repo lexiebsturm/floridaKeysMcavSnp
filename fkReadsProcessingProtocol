@@ -261,7 +261,7 @@ srun cp ./mcavBams/*bam* ./mcavANGSDClones/
 # -baq 1 : realign around indels (not terribly relevant for 2bRAD reads mapped with --local option)
 # -maxDepth : highest total depth (sum over all samples) to assess; set to 10x number of samples
 
-FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -maxDepth 22300"
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -maxDepth 2230"
 
 # T O   D O :
 
@@ -1011,9 +1011,10 @@ cd sfsAnalysis *copy over bams files without clones
 #pop6=Upper-Keys-Meso, 25
 #pop7=Upper-Keys-Shallow, 32
 
-GRate=0.75 # genotyping rate filter - a site must be genotyped in this fraction of all samples.
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
 cat pop0.bams pop1.bams > p01.bams
-
+GRate=0.75 # genotyping rate filter - a site must be genotyped in this fraction of all samples.
 FILTERS='-uniqueOnly 1 -skipTriallelic 1 -minMapQ 30 -minQ 30 -doHWE 1 -maxHetFreq 0.5 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd $MI'
 TODO='-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2'
 echo 'export NIND=`cat p01.bams | wc -l`; export MI=`echo "($NIND*$GRate+0.5)/1" | bc`' >calc
@@ -1021,5 +1022,69 @@ source calc && angsd -b p01.bams -GL 1 -P 4 $FILTERS $TODO -out p01 &
 
 # wait a while...
 
-zcat p01.mafs.gz | cut -f 1,2 | tail -n +2 > goodsites
-angsd sites index goodsites
+zcat p01.mafs.gz | cut -f 1,2 | tail -n +2 > goodsites01
+angsd sites index goodsites01
+
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+TODO="-doSaf 1 -doMajorMinor 1 -doMaf 1 -doPost 1 -anc $GENOME_REF -ref $GENOME_REF"
+angsd -sites goodsites01 -b pop0.bams -GL 1 -P 4 $TODO -out p0 &
+angsd -sites goodsites01 -b pop1.bams -GL 1 -P 4 $TODO -out p1 &
+
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta # reference to which the reads were mapped
+>b100
+for B in `seq 1 100`; do
+echo "sleep $B && realSFS p0.saf.idx p1.saf.idx -ref $GENOME_REF -anc $GENOME_REF -bootstrap 6 -P 1 -resample_chr 1 >p01_$B">>b100;
+done
+
+launcher_creator.py -j b100 -n b100 -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch b100.slurm
+
+SFSIZE="27 61" # 2N+1 for each population. In this case we assume that we have sampled 10 diploid individuals from each `p0` and `p1`.
+for B in `seq 1 100`; do
+echo $SFSIZE >p01_${B}.sfs;
+tail -5 p01_${B} | awk '{for (i=1;i<=NF;i++){a[i]+=$i;}} END {for (i=1;i<=NF;i++){printf "%.3f", a[i]/NR; printf "\t"};printf "\n"}' >> p01_${B}.sfs;
+done
+
+srun Rscript ~/AFS-analysis-with-moments/modSel_write.R contrast=p01 args="p0 p1 21 48 0.02 0.005"
+
+launcher_creator.py -j p01.modsel.runs -n p01.modsel.runs -t 3-00:00:00 -e asturm2017@fau.edu -q mediumq7
+sbatch p01.modsel.runs.slurm
+
+#pop0=Lower Keys-Meso, 13
+#pop2=TER-North-Meso, 23
+cat pop0.bams pop2.bams > p02.bams
+GRate=0.75 # genotyping rate filter - a site must be genotyped in this fraction of all samples.
+FILTERS='-uniqueOnly 1 -skipTriallelic 1 -minMapQ 30 -minQ 30 -doHWE 1 -maxHetFreq 0.5 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd $MI'
+TODO='-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2'
+echo 'export NIND=`cat p02.bams | wc -l`; export MI=`echo "($NIND*$GRate+0.5)/1" | bc`' >calc
+source calc && angsd -b p02.bams -GL 1 -P 4 $FILTERS $TODO -out p02 &
+
+# wait a while...
+
+zcat p02.mafs.gz | cut -f 1,2 | tail -n +2 > goodsites02
+angsd sites index goodsites02
+
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+TODO="-doSaf 1 -doMajorMinor 1 -doMaf 1 -doPost 1 -anc $GENOME_REF -ref $GENOME_REF"
+angsd -sites goodsites02 -b pop0.bams -GL 1 -P 4 $TODO -out p0 &
+angsd -sites goodsites02 -b pop2.bams -GL 1 -P 4 $TODO -out p2 &
+
+#pop0=Lower Keys-Meso, 13
+#pop3=TER-North-shallow, 27
+
+cat pop0.bams pop3.bams > p03.bams
+GRate=0.75 # genotyping rate filter - a site must be genotyped in this fraction of all samples.
+FILTERS='-uniqueOnly 1 -skipTriallelic 1 -minMapQ 30 -minQ 30 -doHWE 1 -maxHetFreq 0.5 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd $MI'
+TODO='-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2'
+echo 'export NIND=`cat p03.bams | wc -l`; export MI=`echo "($NIND*$GRate+0.5)/1" | bc`' >calc
+source calc && angsd -b p03.bams -GL 1 -P 4 $FILTERS $TODO -out p03 &
+
+# wait a while...
+
+zcat p03.mafs.gz | cut -f 1,2 | tail -n +2 > goodsites03
+angsd sites index goodsites03
+
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+TODO="-doSaf 1 -doMajorMinor 1 -doMaf 1 -doPost 1 -anc $GENOME_REF -ref $GENOME_REF"
+angsd -sites goodsites03 -b pop0.bams -GL 1 -P 4 $TODO -out p0 &
+angsd -sites goodsites03 -b pop3.bams -GL 1 -P 4 $TODO -out p3 &

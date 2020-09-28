@@ -161,7 +161,7 @@ heteroStat <- ddply(hetero, c("popdepth"), summarise,
                mean = mean(Heterozygosity),
                sd   = sd(Heterozygosity),
                se   = sd / sqrt(N))
-
+max(heteroStat$mean, na.rm = TRUE)
 ```
 ## PCoA with IBS
 ```{r, PCoA with IBS}
@@ -552,7 +552,7 @@ dat = read.table("fkMcav.baye_fst.txt",header=T)
 head(dat)
 table(dat[,"qval"]<0.1)
 outs=which(dat[,"qval"]<0.1)
-plot_bayescan("fkMcav.baye_fst.txt",FDR=0.05,add_text=F,size=0.5,highlight=outs)
+plot_bayescan("fkMcav.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outs)
 
 fkVcfOuts = read.vcfR("fkVcfOutliers.vcf.gz")
 fkGenlightPopDepthOuts = vcfR2genlight(fkVcfOuts, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
@@ -743,8 +743,7 @@ head(genes)
 snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
 snpLoci$locus = c(1:nrow(snpLoci))
 
-outsByGene = snpLoci %>% 
-  select(locus, chromo, position) %>% 
+outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
   filter(locus %in% outs) %>%
   full_join(., genes, by = "chromo") %>% 
   filter(position>start, position<end)
@@ -754,5 +753,10 @@ outsByGene
 #only show annotated genes
 outsAnno = outsByGene %>% filter(protein != "unknown")
 outsAnno
+
+df_uniq <- unique(outsAnno$locus)
+length(df_uniq)
+
+write.csv(x=outsAnno, file="annotedOutliers.csv")
 
 ```
