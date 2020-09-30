@@ -1,0 +1,414 @@
+koko login: asturm2017@koko-login.hpc.fau.edu
+
+###FK MCAV Reads Processing Protocol
+
+##Downloading Reads from Basespace
+#Go to the bin on your local drive
+
+cd ~/bin
+brew tap basespace/basespace && brew install bs-cli #Use homebrew to install the basespace command line downloader
+bs auth #Should generate a link to authenticate the usage, go to the link in your browser
+bs download project --name JA20179 -o asturm2017@koko-login.hpc.fau.edu:~/2bRAD/floridaKeys/rawReads #--name is the project name and -o is the output directory, in this case uploading the reads directly to koko
+
+# bs download project --name JA20179 -o /Users/student/Documents/Florida\ Keys/rawReads #Or download to s home directory
+
+cd ~/2bRAD/floridaKeys/rawReads #There should be 50 files
+
+################################################################################
+
+mkdir concatReads #Make a new directory where you can concatenate your reads between the two lanes.
+srun cp ./rawReads/*.fastq.gz ./concatReads
+cd concatReads
+gunzip *.fastq.gz #unzip all of your files
+
+nano concat.sh #See script below, concatenate all of your files across lanes
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+
+cat 10_S38_L001_R1_001.fastq 10_S38_L002_R1_001.fastq > fk10.fq
+cat 11_S39_L001_R1_001.fastq 11_S39_L002_R1_001.fastq > fk11.fq
+cat 12_S40_L001_R1_001.fastq 12_S40_L002_R1_001.fastq > fk12.fq
+cat 13_S41_L001_R1_001.fastq 13_S41_L002_R1_001.fastq > fk13.fq
+cat 14_S42_L001_R1_001.fastq 14_S42_L002_R1_001.fastq > fk14.fq
+cat 15_S43_L001_R1_001.fastq 15_S43_L002_R1_001.fastq > fk15.fq
+cat 16_S44_L001_R1_001.fastq 16_S44_L002_R1_001.fastq > fk16.fq
+cat 17_S45_L001_R1_001.fastq 17_S45_L002_R1_001.fastq > fk17.fq
+cat 18_S46_L001_R1_001.fastq 18_S46_L002_R1_001.fastq > fk18.fq
+cat 19_S47_L001_R1_001.fastq 19_S47_L002_R1_001.fastq > fk19.fq
+cat 1_S29_L001_R1_001.fastq 1_S29_L002_R1_001.fastq > fk1.fq
+cat 20_S48_L001_R1_001.fastq 20_S48_L002_R1_001.fastq > fk20.fq
+cat 21_S49_L001_R1_001.fastq 21_S49_L002_R1_001.fastq > fk21.fq
+cat 22_S50_L001_R1_001.fastq 22_S50_L002_R1_001.fastq > fk22.fq
+cat 23_S51_L001_R1_001.fastq 23_S51_L002_R1_001.fastq > fk23.fq
+cat 24_S52_L001_R1_001.fastq 24_S52_L002_R1_001.fastq > fk24.fq
+cat 25_S53_L001_R1_001.fastq 25_S53_L002_R1_001.fastq > fk25.fq
+cat 2_S30_L001_R1_001.fastq 2_S30_L002_R1_001.fastq > fk2.fq
+cat 3_S31_L001_R1_001.fastq 3_S31_L002_R1_001.fastq > fk3.fq
+cat 4_S32_L001_R1_001.fastq 4_S32_L002_R1_001.fastq > fk4.fq
+cat 5_S33_L001_R1_001.fastq 5_S33_L002_R1_001.fastq > fk5.fq
+cat 6_S34_L001_R1_001.fastq 6_S34_L002_R1_001.fastq > fk6.fq
+cat 7_S35_L001_R1_001.fastq 7_S35_L002_R1_001.fastq > fk7.fq
+cat 8_S36_L001_R1_001.fastq 8_S36_L002_R1_001.fastq > fk8.fq
+cat 9_S37_L001_R1_001.fastq 9_S37_L002_R1_001.fastq > fk9.fq
+
+################################################################################
+mkdir trimmedReads
+srun cp ./concatReads/*.fq ./trimmedReads
+
+#Set up a script to trim and deduplicate the files
+2bRAD_trim_launch_dedup.pl fq > trims #Trim and deduplicate files
+launcher_creator.py -j trims -n trims -t 2:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch trims.slurm
+
+################################################################################
+mkdir renamedReads
+srun cp ./trimmedReads/*.tr0 ./renamedReads
+
+#Create and scp a csv file with a column of file names (as deduplicated with the in-line barcodes) and what you want to rename the filed to (sample ID #). Upload the csv to the working directory and copy the sampleRename.py script
+
+python sampleRename.py -i sampleRename -f tr0
+
+################################################################################
+mkdir highQualityReads
+srun cp ./renamedReads/*.tr0 ./highQualityReads
+
+# Quality filtering using fastx_toolkit
+# Creating a list of filtering commands:
+# The options -q 20 -p 90 mean that 90% or more of all bases within the read should have PHRED quality of at least 20 (i.e., probability of error 1% or less)
+# PHRED quality=10*(-log10(P.error))
+ls *.tr0 | perl -pe 's/^(\S+)\.tr0$/cat $1\.tr0 \| fastq_quality_filter -q 20 -p 90 >$1\.trim/' >filt0
+
+# NOTE: run the next line ONLY if your qualities are 33-based (GSAF results are 33-based):
+cat filt0 | perl -pe 's/filter /filter -Q33 /' > filt
+
+################################################################################
+mkdir mappedReadsNoConcat
+srun cp ./highQualityReads/*.trim ./mappedReadsNoConcat
+
+mkdir referenceGenome #Ensure that the concatenated MCAV and algal symbiont transcriptomes are in this directory along with the associated genome index files
+
+cd mappedReadsNoConcat
+
+GENOME_FASTA=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/mcav_syms_updated.fasta
+
+# mapping with --local option, enables clipping of mismatching ends (guards against deletions near ends of RAD tags)
+2bRAD_bowtie2_launch.pl '\.trim$' $GENOME_FASTA > maps #Execute all commands in maps
+
+#Check to ensure that the number of sams files made matches the number of bams files
+
+################################################################################
+mkdir bamsNoConcat
+srun cp ./mappedReadsNoConcat/*.sam ./bamsNoConcat
+
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+#Execute all commands written to s2b
+#Ensure that the number of output bams files matches the number of original sams files
+
+###Now we do ANGSD for the purpose of producing an IBS matrix so we can generate an IBS dendrogram and check to make sure all re-extracts, technical replicates, etc. are clones of one another
+
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -baq 1 -ref $GENOME_REF -maxDepth 25700"
+TODO="-doQsDist 1 -doDepth 1 -doCounts 1"
+angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out dd
+
+
+Rscript ~/bin/plotQC.R dd
+cat dd.info
+# scp dd.pdf to laptop to look at distribution of base quality scores, fraction of sites in each sample passing coverage thresholds, and fraction of sites passing genotyping rates cutoffs. Use these to guide choices of -minQ,  -minIndDepth and -minInd filters in subsequent ANGSD runs
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 30 -minInd 205 -snp_pval 1e-5 -minMaf 0.05 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5"
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 32 -doPost 1 -doGlf 2"
+angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out noSamplesConcat
+
+NSITES=`zcat noSamplesConcat.beagle.gz | wc -l`
+echo $NSITES
+## 13,819 SNPs
+
+#scp the ibsMAT and use the output to generate a cluster dendrogram so you can identify, repeated samples, clones, etc.
+
+################################################################################
+mkdir tr0Concat
+srun cp ./renamedReads/*.tr0 ./tr0Concat
+###Concatenate any files that may be re-extracts or bad barcode files that are clones of good bc samples.
+##For now leave technical replicates and natural clones
+
+#YOU SHOULD HAVE 223 FILES
+
+################################################################################
+mkdir highQualityConcat
+srun cp ./tr0Concat/*.tr0 ./highQualityConcat
+
+# Quality filtering using fastx_toolkit
+# The options -q 20 -p 90 mean that 90% or more of all bases within the read should have PHRED quality of at least 20 (i.e., probability of error 1% or less)
+# PHRED quality=10*(-log10(P.error))
+ls *.tr0 | perl -pe 's/^(\S+)\.tr0$/cat $1\.tr0 \| fastq_quality_filter -q 20 -p 90 >$1\.trim/' >filt0
+
+# NOTE: run the next line ONLY if your qualities are 33-based (GSAF results are 33-based):
+cat filt0 | perl -pe 's/filter /filter -Q33 /' > filt
+#if you did NOT run the line above, run this one:
+mv filt0 filt
+
+launcher_creator.py -j filt -n filt -t 1:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch filt.slurm
+
+################################################################################
+mkdir samsConcat
+srun cp ./highQualityConcat/*.trim ./samsConcat
+
+# Mapping reads to a reference genome with soft-clipping (Bowtie2 --local option) to avoid indels near read ends
+GGENOME_FASTA=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/mcav_syms_updated.fasta
+2bRAD_bowtie2_launch.pl '\.trim$' $GENOME_FASTA > maps
+launcher_creator.py -j maps -n maps -t 2:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch maps.slurm
+
+#See how many reads aligned with zoox transcriptomes
+#Using ~2Mb contig as a host reference; look up contig lengths in the header of any sam file
+#Run scripts to count read alignments to each of the algal symbiont transcriptomes
+
+zooxType.pl host="Sc0000000" >zooxCounts.txt
+
+#scp zooxCounts.txt to local directory and open as csv file
+
+################################################################################
+mkdir mcavSams
+srun cp ./samsConcat/*.sam ./mcavSams
+
+#Re-write sams files without any reads aligning to algal symbiont transcriptomes
+
+for f in *.sam
+do
+  egrep -v "chr11|chr12|chr13|chr14" < "$f" > "$f".mcav.sam
+done
+
+#These sam files should now only have MCAV reads
+
+################################################################################
+mkdir zooxSams
+srun cp ./samsConcat/*.sam ./zooxSams
+
+#Re-write sams files without any reads aligning to algal symbiont transcriptomes
+
+for f in *.trim.bt2.sam
+do
+  egrep "chr11|chr12|chr13|chr14" < "$f" > "$f".trim.bt2.zoox.sam
+done
+
+#These sam files should now only have zoox reads
+
+################################################################################
+mkdir mcavBams
+srun cp ./mcavSams/*.sam ./mcavBams
+
+#Compressing, sorting and indexing the SAM files, so they become BAM files:
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+launcher_creator.py -j s2b -n s2b -t 1:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
+sbatch s2b.slurm
+
+ls *bam >bams
+
+#Archive these BAMS files
+
+#Read counts
+for i in *.bam; do
+    echo $i >> output
+    samtools view $i | cut -f1 | sort | uniq | wc -l >> output
+done
+
+################################################################################
+mkdir zooxBams
+srun cp ./zooxSams/*.sam ./zooxBams
+
+#Compressing, sorting and indexing the SAM files, so they become BAM files:
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+launcher_creator.py -j s2b -n s2b -t 1:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
+sbatch s2b.slurm
+
+ls *bam >bams
+
+#Archive these BAMS files
+
+#Read counts
+for i in *.bam; do
+    echo $i >> output
+    samtools view $i | cut -f1 | sort | uniq | wc -l >> output
+done
+
+################################################################################
+mkdir mcavANGSDClones
+srun cp ./mcavBams/*bam* ./mcavANGSDClones/
+
+# angsd settings:
+# -minMapQ 20 : only highly unique mappings (prob of erroneous mapping = 1%)
+# -baq 1 : realign around indels (not terribly relevant for 2bRAD reads mapped with --local option)
+# -maxDepth : highest total depth (sum over all samples) to assess; set to 10x number of samples
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -maxDepth 2230"
+
+# T O   D O :
+
+TODO="-doQsDist 1 -doDepth 1 -doCounts 1 -dumpCounts 2"
+
+srun angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out ddClones
+
+# summarizing results (using modified script by Matteo Fumagalli)
+
+Rscript ~/bin/plotQC.R ddClones > qranks
+
+# proportion of sites covered at >5x:
+
+cat qranks
+
+# scp dd.pdf to laptop to look at distribution of base quality scores, fraction of sites in each sample passing coverage thresholds, and fraction of sites passing genotyping rates cutoffs. Use these to guide choices of -minQ,  -minIndDepth and -minInd filters in subsequent ANGSD runs
+
+##ANGSD WITH NEW FILTERS W CLONES
+
+# Note: PCA and Admixture are not supposed to be run on data that contain clones or genotyping replicates. For PCA, these can be removed without rerunning ANGSD from the IBS distance matrix; but for ngsAdmix ANGSD must be rerun.
+
+# Generating genotype likelihoods from highly confident (non-sequencing-error) SNPs
+# set minInd to 75-80% of your total number of bams
+# if you expect very highly differentiated populations with nearly fixed alternative alleles, remove '-hwe_pval 1e-5' form FILTERS
+# -doGeno 8 : genotype likelihood format setting for ngsLD; if you want to run PCA, use -doGeno 32 (but I recommend using ibsMat for all ordination work)
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 168 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doVcf 1 -doPost 1 -doGlf 2"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out fkMcavClones
+
+# how many SNPs?
+NSITES=`zcat fkMcavClones.mafs.gz | wc -l`
+echo $NSITES
+
+#scp the ibs matrix to identify clones
+
+################################################################################
+mkdir mcavBamsNoClones
+srun cp ./mcavBams/*.bam* ./mcavBamsNoClone
+
+#Manually remove clones and technical replicates based on IBS dendrogram
+#YOU SHOULD HAVE 215 FILES
+
+################################################################################
+mkdir mcavANGSDNoClones
+srun cp ./mcavBamsNoClone/*bam* ./mcavANGSDNoClones
+
+# Note: PCA and Admixture are not supposed to be run on data that contain clones or genotyping replicates. For PCA, these can be removed without rerunning ANGSD from the IBS distance matrix; but for ngsAdmix ANGSD must be rerun.
+
+# Generating genotype likelihoods from highly confident (non-sequencing-error) SNPs
+# set minInd to 75-80% of your total number of bams
+# if you expect very highly differentiated populations with nearly fixed alternative alleles, remove '-hwe_pval 1e-5' form FILTERS
+# -doGeno 8 : genotype likelihood format setting for ngsLD; if you want to run PCA, use -doGeno 32 (but I recommend using ibsMat for all ordination work)
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doVcf 1 -doPost 1 -doGlf 2"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoClones
+
+# how many SNPs?
+NSITES=`zcat fkMcavNoClones.mafs.gz | wc -l`
+echo $NSITES
+
+# NgsAdmix for K from 2 to 11 : do not run if the dataset contains clones or genotyping replicates!
+for K in `seq 2 11` ;
+do
+NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${K};
+done
+
+# alternatively, to use real ADMIXTURE on called SNPs (requires plink and ADMIXTURE):
+gunzip fkMcavNoClones.vcf.gz
+cat fkMcavNoClones.vcf | sed 's/xpSc//g' >fkMcavNoClones_chr.vcf
+cat fkMcavNoClones_chr.vcf | sed 's/xfSc//g' >fkMcavNoClones_chr1.vcf
+cat fkMcavNoClones_chr1.vcf | sed 's/Sc//g' >fkMcavNoClones_chr2.vcf
+plink --vcf fkMcavNoClones_chr2.vcf --make-bed --allow-extra-chr --out fkMcavNoClones
+for K in `seq 1 11`; \
+do admixture --cv fkMcavNoClones.bed $K | tee fkMcavNoClones_${K}.out; done
+
+grep -h CV fkMcavNoClones*.out
+
+####
+CV error (K=1): 0.48446
+CV error (K=2): 0.43832
+CV error (K=3): 0.43216
+CV error (K=4): 0.43160
+CV error (K=5): 0.43222
+CV error (K=6): 0.43130
+CV error (K=7): 0.43355
+CV error (K=8): 0.44174
+CV error (K=9): 0.45271
+CV error (K=10): 0.46330
+CV error (K=11): 0.46838
+
+bcftools reheader fkMcavNoClones.vcf.gz -s sampleListNoClones -o fkMcavNoClonesRenamed.vcf.gz
+
+################################################################################
+mkdir bayescan
+cd bayescan
+srun cp ../macvANGSDNoClones/fkMcavNoClones.vcf.gz . #Note do not use the renamed version, pgdspider has a tough time parsing the samples into pops when you do
+srun gunzip fkMcavNoClones.vcf.gz
+
+#scp bspops.txt to koko
+
+echo "############
+# VCF Parser questions
+PARSER_FORMAT=VCF
+# Do you want to include a file with population definitions?
+VCF_PARSER_POP_QUESTION=true
+# Only input following regions (refSeqName:start:end, multiple regions: whitespace separated):
+VCF_PARSER_REGION_QUESTION=
+# What is the ploidy of the data?
+VCF_PARSER_PLOIDY_QUESTION=DIPLOID
+# Only output following individuals (ind1, ind2, ind4, ...):
+VCF_PARSER_IND_QUESTION=
+# Output genotypes as missing if the read depth of a position for the sample is below:
+VCF_PARSER_READ_QUESTION=
+# Take most likely genotype if "PL" or "GL" is given in the genotype field?
+VCF_PARSER_PL_QUESTION=true
+# Do you want to exclude loci with only missing data?
+VCF_PARSER_EXC_MISSING_LOCI_QUESTION=false
+# Select population definition file:
+VCF_PARSER_POP_FILE_QUESTION=./bspops.txt
+# Only output SNPs with a phred-scaled quality of at least:
+VCF_PARSER_QUAL_QUESTION=
+# Do you want to include non-polymorphic SNPs?
+VCF_PARSER_MONOMORPHIC_QUESTION=false
+# Output genotypes as missing if the phred-scale genotype quality is below:
+VCF_PARSER_GTQUAL_QUESTION=
+# GESTE / BayeScan Writer questions
+WRITER_FORMAT=GESTE_BAYE_SCAN
+# Specify which data type should be included in the GESTE / BayeScan file  (GESTE / BayeScan can only analyze one data type per file):
+GESTE_BAYE_SCAN_WRITER_DATA_TYPE_QUESTION=SNP
+############" >vcf2bayescan.spid
+
+java -Xmx1024m -Xms512m -jar ~/bin/PGDSpider_2.0.7.1/PGDSpider2-cli.jar -inputfile fkMcavNoClones.vcf -outputfile fkMcav.bayescan -spid vcf2bayescan.spid
+
+# launching bayescan (this might take 12-24 hours)
+srun bayescan fkMcav.bayescan -threads=20
+
+removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=extract > fkVcfOutliers.vcf
+
+removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=delete > fkVcfNeutral.vcf
+################################################################################

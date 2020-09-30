@@ -315,6 +315,10 @@ ggsave("../figures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15,
 ```
 ## ADMIXTURE Plot
 ```{r, ADMIXTURE}
+df1 <- read.csv("fkMcavNoClones_k4.csv")
+admixedSamples=filter(df1, cluster1 < 0.75, cluster2 < 0.75, cluster3 < 0.75, cluster4 < 0.75)
+count(admixedSamples$pop)
+
 df <- read.csv("fkMcavNoClones_k4.csv")
 df$sample <- factor(df$sample, levels= df$sample[order(-df$cluster4, df$cluster2)])
 
@@ -759,4 +763,53 @@ length(df_uniq)
 
 write.csv(x=outsAnno, file="annotedOutliers.csv")
 
+```
+```{r, bayescanOutliers}
+source('plot_R.r')
+
+#install.packages("boa")
+library(boa)
+source('plot_R.r')
+dat = read.table("fkMcavDepth.baye_fst.txt",header=T)
+head(dat)
+table(dat[,"qval_g"]<0.1)
+outsDepth=which(dat[,"qval_g"]<0.1)
+plot_bayescan("fkMcavDepth.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outsDepth)
+
+genes = read.table("mcav_gene_regions.tab")
+names(genes) = c("chromo","start","end","gene")
+
+# expand gene regions ± 2000 bp
+genes$start = genes$start -2000
+genes$end = genes$end +2000
+
+gnames = read.table("mcav_gnames.txt", sep = "\t")
+names(gnames) = c("gene", "protein")
+
+genes = full_join(genes, gnames, by = "gene")
+genes$protein=as.character(genes$protein)
+genes$protein[is.na(genes$protein)]="unknown"
+
+#how many annotated genes do we have?
+nrow(genes[genes$protein!="unknown",])
+head(genes)
+
+snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
+snpLoci$locus = c(1:nrow(snpLoci))
+
+outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
+  filter(locus %in% outsDepth) %>%
+  full_join(., genes, by = "chromo") %>% 
+  filter(position>start, position<end)
+
+outsByGene
+
+#only show annotated genes
+outsAnno = outsByGene %>% filter(protein != "unknown")
+outsAnno
+
+df_uniq <- unique(outsAnno$locus)
+length(df_uniq)
+
+write.csv(x=outsAnno, file="annotedOutliersDepth.csv")
 ```
