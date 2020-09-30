@@ -412,3 +412,96 @@ removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FD
 
 removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=delete > fkVcfNeutral.vcf
 ################################################################################
+
+#Calculating population parameters no filter on excess heterozygosity
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
+
+mkdir angsdPopStats
+
+srun cp ./mcavBamsNoClones/*bam* ./angsdPopStats #copy over all the bam files (clones removed) and the bam lists for each pop. Pop definitions are below
+
+FILTERS="-uniqueOnly 1 -remove_bads 1  -skipTriallelic 1 -minMapQ 20 -minQ 25 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162" #Note there are no MAF or snp filters so as not to affect allelic frequencies that may mess with heterozygosity calcs
+
+TODO="-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2 -doGeno 11 -doGlf 2"
+
+srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoSNPFilter
+
+# individual heterozygosities (proportion of heterozygotes across SNPs that pass filters)
+Rscript ~/bin/heterozygosity_beagle.R fkMcavNoSNPFilter.beagle.gz
+#Prints individual heterozygosity
+
+#pop0=Lower Keys-Meso, 13
+#pop1=Lower Keys-shallow, 30
+#pop2=TER-North-Meso, 23
+#pop3=TER-North-shallow, 27
+#pop4=TER-South-Meso, 37
+#pop5=TER-South-shallow, 28
+#pop6=Upper-Keys-Meso, 25
+#pop7=Upper-Keys-Shallow, 32
+
+
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
+export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -baq 1"
+TODO="-doSaf 1 -anc $GENOME_REF -ref $GENOME_REF"
+
+srun angsd -b pop0.bams -minInd 10 -GL 1 -P 1 $TODO $FILTERS -out pop0
+srun angsd -b pop1.bams -minInd 23 -GL 1 -P 1 $TODO $FILTERS -out pop1
+srun angsd -b pop2.bams -minInd 18 -GL 1 -P 1 $TODO $FILTERS -out pop2
+srun angsd -b pop3.bams -minInd 21 -GL 1 -P 1 $TODO $FILTERS -out pop3
+srun angsd -b pop4.bams -minInd 28 -GL 1 -P 1 $TODO $FILTERS -out pop4
+srun angsd -b pop5.bams -minInd 21 -GL 1 -P 1 $TODO $FILTERS -out pop5
+srun angsd -b pop6.bams -minInd 19 -GL 1 -P 1 $TODO $FILTERS -out pop6
+srun angsd -b pop7.bams -minInd 24 -GL 1 -P 1 $TODO $FILTERS -out pop7
+
+# generating per-population SFS
+nano sfs
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=sfs
+#SBATCH --output=sfs-%j.out
+#SBATCH --error=sfs-%j.err
+
+realSFS pop0.saf.idx >pop0.sfs
+realSFS pop1.saf.idx >pop1.sfs
+realSFS pop2.saf.idx >pop2.sfs
+realSFS pop3.saf.idx >pop3.sfs
+realSFS pop4.saf.idx >pop4.sfs
+realSFS pop5.saf.idx >pop5.sfs
+realSFS pop6.saf.idx >pop6.sfs
+realSFS pop7.saf.idx >pop7.sfs
+
+##Producing thetas
+
+nano theta
+
+#!/bin/sh
+#SBATCH --partition shortq7
+#SBATCH --nodes 1
+#SBATCH --exclusive
+#SBATCH --mail-type=all
+#SBATCH --mail-user=asturm2017@fau.edu
+#SBATCH --job-name=theta
+
+realSFS saf2theta pop0.saf.idx -sfs pop0.sfs -outname pop0
+thetaStat do_stat pop0.thetas.idx
+realSFS saf2theta pop1.saf.idx -sfs pop1.sfs -outname pop1
+thetaStat do_stat pop1.thetas.idx
+realSFS saf2theta pop2.saf.idx -sfs pop2.sfs -outname pop2
+thetaStat do_stat pop2.thetas.idx
+realSFS saf2theta pop3.saf.idx -sfs pop3.sfs -outname pop3
+thetaStat do_stat pop3.thetas.idx
+realSFS saf2theta pop4.saf.idx -sfs pop4.sfs -outname pop4
+thetaStat do_stat pop4.thetas.idx
+realSFS saf2theta pop5.saf.idx -sfs pop5.sfs -outname pop5
+thetaStat do_stat pop5.thetas.idx
+realSFS saf2theta pop6.saf.idx -sfs pop6.sfs -outname pop6
+thetaStat do_stat pop6.thetas.idx
+realSFS saf2theta pop7.saf.idx -sfs pop7.sfs -outname pop7
+thetaStat do_stat pop7.thetas.idx
