@@ -40,10 +40,70 @@ setwd('../data')
 For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
 ```{r, load packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr")
+pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr", "rgdal", "broom", "rgeos", "ggmap", "moments", "car", "multcompView", "lsmeans")
 ```
 
 # Figures and analyses
+##Sampling Map
+```{r, sampling map} 
+ # set factors to false 
+ options(stringsAsFactors = FALSE) 
+ 
+ fknms <- readOGR("/Users/student/Documents/Florida\ Keys/Maps/fknms_py2/fknms_py.shp") 
+ fknmsshpfile <- spTransform(fknms, "+init=epsg:4326") #WGS84 
+ fknmsdta <- tidy(fknmsshpfile, group=group) 
+ 
+ #bathy<- readOGR("/Users/student/Documents/Florida\ Keys/Maps/tl_2016_12_cousub/tl_2016_12_cousub.shp") 
+ #bathyshpfile <- spTransform(bathy, "+init=epsg:4326") #WGS84 
+ #bathydta <- tidy(bathyshpfile, group=group) 
+ 
+ fkSites = read.csv("sample-sites.csv", header=TRUE) 
+ levels(fkSites$General.Site) 
+ fkSites$General.Site <- factor(fkSites$General.Site, levels = c("TER-South", "TER-North", "Lower-Keys", "Upper-Keys")) 
+ 
+ baseMap <- get_stamenmap(bbox = c(left = -83, 
+                                 bottom = 24, 
+                                 right = -80, 
+                                 top = 26), 
+                        maptype = "terrain-background", 
+                        crop = FALSE, 
+                        zoom = 10) 
+ 
+ # plot map 
+ levels(fkSites$General.Site) 
+ 
+ fkSites$General.Site = factor(fkSites$General.Site, levels(fkSites$General.Site)[c(1,3,2,4)]) 
+ 
+ fkMap=ggmap(baseMap)+ 
+   geom_polygon(aes(x=long, y=lat, group=group), 
+                data=fknmsdta, 
+                color="dark red", alpha=.2, size=.2) + 
+   geom_point(data = fkSites, size= 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
+   #scale_fill_manual(values = brewer.pal(name = "Set3", n = 4), name = "Population") + 
+   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DRTS", "DRTN", "LK", "UK"))+ 
+   scale_shape_manual(values = c(24,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
+   scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+ 
+   scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+ 
+   guides(fill = guide_legend(override.aes = list(shape = 21, size= 4)))+ 
+   guides(shape = guide_legend(override.aes = list(size= 4)))+ 
+   #labs(x="Longitude", y="Latitutde")+ 
+   theme_bw()+ 
+   theme(legend.position = "right", 
+         axis.title.x = element_blank(), 
+         axis.title.y = element_blank())+ 
+   ggsn::scalebar(x.min = -83, 
+                  y.min = 24, 
+                  x.max = -80, 
+                  y.max = 26, 
+                  dist = 50, transform = TRUE, 
+                  model = "WGS84", 
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3) 
+ fkMap 
+
+ ggsave("../figures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+ 
+```
+
 ## Dendrogram with Clones
 ```{r, Dendrogram With Clones, fig.dim = c(13, 4.75)}
 cloneBams = read.table("sampleList")[,1] # list of bam files
@@ -80,13 +140,15 @@ for(i in 1:nrow(cloneDData$segments)) {
 cloneDendPoints$y = point[!is.na(point)]
 
 techReps = c("009-1", "009-2", "009-3", "159-1", "159-2", "159-3", "171-1", "171-2", "171-3")
+
+cloneDendPoints$depth=as.factor(cloneDendPoints$depth)
 cloneDendPoints$depth = factor(cloneDendPoints$depth,levels(cloneDendPoints$depth)[c(2,1)])
 
 cloneDendA = ggplot() +
   geom_segment(data = segment(cloneDData), aes(x = x, y = y, xend = xend, yend = yend2), size = 0.5) +
   geom_point(data = cloneDendPoints, aes(x = x, y = y, fill = pop, shape = depth), size = 4, stroke = 0.25) +
   #scale_fill_brewer(palette = "Dark2", name = "Population") +
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population")+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
   scale_shape_manual(values=c(24, 25), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
   #geom_hline(yintercept = 0.1, color = "red", lty = 5, size = 0.75) + # creating a dashed line to indicate a clonal distance threshold
   geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = x, y = (y - .015), label = label), angle = 90) + # spacing technical replicates further from leaf
@@ -133,13 +195,15 @@ snpDData = dendro_data(snpDend)
 snpDendPoints = snpDData$labels
 snpDendPoints$site = snpI2P[,2][order.dendrogram(snpDend)]
 snpDendPoints$depth = snpI2P[,3][order.dendrogram(snpDend)]
+
+snpDendPoints$depth=as.factor(snpDendPoints$depth)
 snpDendPoints$depth = factor(snpDendPoints$depth, levels(snpDendPoints$depth)[c(2,1)])
 
 snpDendA = ggplot() +
   geom_segment(data = segment(snpDData), aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_point(data = snpDendPoints, aes(x = x, y = y, fill = site, shape = depth), size = 5) +
   scale_shape_manual(values=c(24, 25), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population")+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
   guides(fill = guide_legend(override.aes = list(shape = 21)))+
   theme_dendro()
 
@@ -154,14 +218,29 @@ ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, uni
 ```
 
 ## Heterozygosity
-```{r, hetero}
+```{r, popStats}
 hetero=read.csv("sampleHeterozygosity.csv")
-heteroStat <- ddply(hetero, c("popdepth"), summarise,
-               N    = length(Heterozygosity),
-               mean = mean(Heterozygosity),
-               sd   = sd(Heterozygosity),
+heteroStatAllSites <- ddply(hetero, c("popdepth"), summarise,
+               N    = length(HeterozygosityAllSites),
+               mean = mean(HeterozygosityAllSites),
+               sd   = sd(HeterozygosityAllSites),
                se   = sd / sqrt(N))
-max(heteroStat$mean, na.rm = TRUE)
+max(heteroStatAllSites$mean, na.rm = TRUE)
+min(heteroStatAllSites$mean, na.rm = TRUE)
+
+heteroVariantSites <- ddply(hetero, c("popdepth"), summarise,
+               N    = length(HeterozygosityVariantSites),
+               mean = mean(HeterozygosityVariantSites),
+               sd   = sd(HeterozygosityVariantSites),
+               se   = sd / sqrt(N))
+max(heteroVariantSites$mean, na.rm = TRUE)
+min(heteroVariantSites$mean, na.rm = TRUE)
+
+heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) + 
+  geom_boxplot()+
+  theme_bw()
+heteroPlot
+
 ```
 ## PCoA with IBS
 ```{r, PCoA with IBS}
@@ -187,6 +266,7 @@ fkSnpPcoaValues
 
 snpPCoA = merge(fkSnpPcoaValues, aggregate(cbind(mean.x=PCo1,mean.y=PCo2)~popsite, fkSnpPcoaValues, mean), by="popsite")
 
+snpPCoA$depth=as.factor(snpPCoA$depth)
 snpPCoA$depth = factor(snpPCoA$depth, levels(snpPCoA$depth)[c(2,1)])
 
 # SNP PCoA biplot
@@ -198,7 +278,7 @@ fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop
   geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3, show.legend = FALSE, guide=FALSE) + #individual's points indicated by circles
   scale_shape_manual(values = c(24,25), breaks=c("Shallow","Mesophotic"), name = "Depth Zone") +
   geom_point(aes(x = mean.x, y = mean.y, shape = depth), size = 5, color = "black") + #population centroids indicated by triangles
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population")+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
   scale_color_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name = " Population", guide=FALSE) +
   xlab(paste ("PCo 1 (", fkSnpPcoaVar[1],"%)", sep = "")) + #Prints percent variation explained by first axis
   ylab(paste ("PCo 2 (", fkSnpPcoaVar[2],"%)", sep = "")) + #Prints percent variation explained by second axis
@@ -243,6 +323,7 @@ set.seed(1999)
 amovasignif <- randtest(amova, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
 amovasignif
 
+fkGenlightPopDepth$pop=as.factor(fkGenlightPopDepth$pop)
 fkGenlightPopDepth$pop = factor(fkGenlightPopDepth$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
 
 set.seed(694)
@@ -288,8 +369,8 @@ snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+
                        space = "Lab", name = expression(paste(italic("F")[ST])))+
   geom_text(data = snpFst, aes(Pop, Pop2, label = Fst), color = ifelse(snpQ$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQ$Qval < 0.05, 6, 5)) +
   guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
-  scale_y_discrete(position = "right")+
-  scale_x_discrete(labels = str_wrap(snpFst$Pop, width = 6)) +
+  scale_y_discrete(position = "right", labels=c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow","DRTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow"))+
+  scale_x_discrete(labels = str_wrap(c("DRTS-Mesophotic", "DRTN-Shallow","DRTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic"), width = 6)) +
   #ggtitle("   SNP") +
   theme_minimal()
 
@@ -315,30 +396,27 @@ ggsave("../figures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15,
 ```
 ## ADMIXTURE Plot
 ```{r, ADMIXTURE}
-df1 <- read.csv("fkMcavNoClones_k4.csv")
-admixedSamples=filter(df1, cluster1 < 0.75, cluster2 < 0.75, cluster3 < 0.75, cluster4 < 0.75)
-count(admixedSamples$pop)
+# df1 <- read.csv("fkMcavNoClones_k4.csv")
+# admixedSamples=filter(df1, cluster1 < 0.75, cluster2 < 0.75, cluster3 < 0.75, cluster4 < 0.75)
+# count(admixedSamples$pop)
 
 df <- read.csv("fkMcavNoClones_k4.csv")
 df$sample <- factor(df$sample, levels= df$sample[order(-df$cluster4, df$cluster2)])
-
 mdat = melt(df, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
-
+mdat$pop=as.factor(mdat$pop)
 mdat$pop = factor(mdat$pop, levels(mdat$pop)[c(6,5,4,3,2,1,8,7)])
+levels(mdat$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 p = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry)) +
   geom_bar(stat="identity", position="stack") +
-  facet_grid(. ~ pop, drop=TRUE, space="free", scales="free")
-
+  facet_grid(.~pop, drop=TRUE, space="free", scales="free")
 #col2 = c("turquoise", "blue", "green", "purple")
-
 #names(col2) = levels(mdat$Ancestry)
-
 p2 = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
-  facet_grid(~pop, scales = "free", switch = "x", space = "free") +
+  facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
   labs(x = "Population", y = "Ancestry") +
-  ggtitle("K4 NGSAdmixture Plot") +
+  #ggtitle("K4 NGSAdmixture Plot") +
   theme(plot.title = element_text(hjust = 0.5),
   panel.grid=element_blank(),
   panel.background=element_rect(fill=NA, colour="grey25"),
@@ -356,7 +434,6 @@ p2 = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   scale_y_continuous(expand=c(0, 0)) +
   scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
   guides(fill=guide_legend(override.aes=list(colour=NULL)))
-
 p2
 
 ggsave("../figures/admixturePlot.tiff", plot = p2, width = 30, height = 15, units = "cm", dpi = 300)
@@ -364,8 +441,7 @@ ggsave("../figures/admixturePlot.tiff", plot = p2, width = 30, height = 15, unit
 
 ## Zoox and Depth
 ```{r, zooxDepth, eval = F}
-install.packages("moments")
-library(moments)
+
 zooxHostProportions=read.csv("zooxMcavRatio.csv", header=TRUE)
 skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
 zooxHostProportions$zooxReadRatio <- log10(zooxHostProportions$zooxReadRatio)
@@ -377,19 +453,13 @@ zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=zooxReadRatio)) +
 
 zooxDepthPlot
 
-install.packages("car")
-library(car)
-
 leveneTest(zooxReadRatio ~ site*depthZone, data = zooxHostProportions)
 res.aov3 <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
 shapiro.test(zooxHostProportions$zooxReadRatio)
 residualplot=plot(res.aov3, 2)
 zooxAnova <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
 Anova(zooxAnova, type = "III")
-install.packages("multcompView")
-library(multcompView)
-install.packages("lsmeans")
-library(lsmeans)
+
 
 lsmeans = lsmeans::lsmeans ### Uses the lsmeans function
                            ###  from the lsmeans package,
@@ -549,179 +619,24 @@ snpMantel
 ```{r, bayescanOutliers}
 source('plot_R.r')
 
-#install.packages("boa")
-library(boa)
-source('plot_R.r')
 dat = read.table("fkMcav.baye_fst.txt",header=T)
 head(dat)
 table(dat[,"qval"]<0.1)
 outs=which(dat[,"qval"]<0.1)
 plot_bayescan("fkMcav.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outs)
 
-fkVcfOuts = read.vcfR("fkVcfOutliers.vcf.gz")
-fkGenlightPopDepthOuts = vcfR2genlight(fkVcfOuts, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
-locNames(fkGenlightPopDepthOuts) = paste(fkVcfOuts@fix[,1],fkVcfOuts@fix[,2],sep="_")
-popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
-strata(fkGenlightPopDepthOuts) = data.frame(popData)
-setPop(fkGenlightPopDepthOuts) = ~popdepth
-amovaOuts <- poppr.amova(fkGenlightPopDepthOuts, ~popdepth) #Runs AMOVA
-amovaOuts
-set.seed(1999)
-amovasignifOuts <- randtest(amovaOuts, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
-amovasignifOuts
 
-fkGenlightPopDepthOuts$pop = factor(fkGenlightPopDepthOuts$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
+#Minor Allele Frequencies of Outliers Across Populations
+outAlleleFreq=read.csv("outlierAlleleFreqs.csv")
+outAlleleFreqPlot <- ggplot(outAlleleFreq, aes(x=PopDepth, y=MIF)) + 
+  geom_boxplot()+
+  theme_bw()
+outAlleleFreqPlot
 
-set.seed(694)
-fk.fstOuts <- stamppFst(fkGenlightPopDepthOuts, nboots = 99, percent = 95, nclusters = 4) #99 permutations
-fk.fstOuts$Fsts
-fk.fstOuts$Pvalues
+outAlleleFreq.lm = lm(MIF ~ AvgDepth, data=outAlleleFreq)
+summary(outAlleleFreq.lm)$r.squared 
 
-pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
-
-# reads in fst matrix
-snpFstMaOuts <- as.matrix(fk.fstOuts$Fsts)
-upperTriangle(snpFstMaOuts, byrow=TRUE) <- lowerTriangle(snpFstMaOuts)
-snpFstMaOuts <- snpFstMaOuts[,pop.order] %>%
-  .[pop.order,]
-snpFstMaOuts[upper.tri(snpFstMaOuts)] <- NA
-snpFstMaOuts <- as.data.frame(snpFstMaOuts)
-
-snpFstMaOuts$Pop = factor(row.names(snpFstMaOuts), levels = unique(pop.order))
-
-snpQMaOuts <- as.matrix(fk.fstOuts$Pvalues)
-upperTriangle(snpQMaOuts, byrow=TRUE) <- lowerTriangle(snpQMaOuts)
-snpQMaOuts <- snpQMaOuts[,pop.order] %>%
-  .[pop.order,]
-snpQMaOuts[upper.tri(snpQMaOuts)] <- NA
-snpQMaOuts <- as.data.frame(snpQMaOuts)
-snpQMaOuts$Pop = factor(row.names(snpQMaOuts), levels = unique(pop.order))
-
-snpFstMaOuts$Pop = factor(row.names(snpFstMaOuts), levels = unique(pop.order))
-snpFstOuts = melt(snpFstMaOuts, id.vars = "Pop", value.name = "Fst", variable.name = "Pop2", na.rm = TRUE)
-snpFstOuts = snpFstOuts[snpFstOuts$Pop != snpFstOuts$Pop2,]
-snpFstOuts$Fst = round(snpFstOuts$Fst, 3)
-snpFstOuts = snpFstOuts %>% mutate(Fst = replace(Fst, Fst < 0, 0))
-head(snpFstOuts)
-
-snpQOuts = melt(snpQMaOuts, id.vars = "Pop", value.name = "Pval", variable.name = "Pop2", na.rm = TRUE)
-snpQOuts = snpQOuts[snpQOuts$Pop != snpQOuts$Pop2,]
-snpQOuts$Qval = p.adjust(snpQOuts$Pval, method = "BH")
-head(snpQOuts)
-
-snpHeatmapAOuts = ggplot(data = snpFstOuts, aes(Pop, Pop2, fill = Fst))+
-  geom_tile(color = "white")+
-  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.35),
-                       space = "Lab", name = expression(paste(italic("F")[ST])))+
-  geom_text(data = snpFstOuts, aes(Pop, Pop2, label = Fst), color = ifelse(snpQOuts$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQOuts$Qval < 0.05, 6, 5)) +
-  guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
-  scale_y_discrete(position = "right")+
-  scale_x_discrete(labels = str_wrap(snpFstOuts$Pop, width = 6)) +
-  #ggtitle("   SNP") +
-  theme_minimal()
-
-snpHeatmapOuts = snpHeatmapAOuts + theme(
-  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"),
-  axis.text.y = element_text(size = 16, color = "black"),
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  legend.position = "right",
-  legend.direction = "vertical",
-  legend.title = element_text(size = 16),
-  legend.text = element_text(size = 14),
-  plot.title = element_text(size = 16)
-)
-
-snpHeatmapOuts
-
-ggsave("../figures/snpHeatMapOuts.tiff", plot = snpHeatmapOuts, width = 34, height = 15, units = "cm", dpi = 300)
-
-###Neutral SNPs Only
-fkVcfNeut = read.vcfR("fkVcfNeutral.vcf.gz")
-fkGenlightPopDepthNeut = vcfR2genlight(fkVcfNeut, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
-locNames(fkGenlightPopDepthNeut) = paste(fkVcfNeut@fix[,1],fkVcfNeut@fix[,2],sep="_")
-popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
-strata(fkGenlightPopDepthNeut) = data.frame(popData)
-setPop(fkGenlightPopDepthNeut) = ~popdepth
-amovaNeut <- poppr.amova(fkGenlightPopDepthNeut, ~popdepth) #Runs AMOVA
-amovaNeut
-set.seed(1999)
-amovasignifNeut <- randtest(amovaNeut, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
-amovasignifNeut
-
-fkGenlightPopDepthNeut$pop = factor(fkGenlightPopDepthNeut$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
-
-set.seed(694)
-fk.fstNeut <- stamppFst(fkGenlightPopDepthNeut, nboots = 99, percent = 95, nclusters = 4) #99 permutations
-fk.fstNeut$Fsts
-fk.fstNeut$Pvalues
-
-pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
-
-# reads in fst matrix
-snpFstMaNeut <- as.matrix(fk.fstNeut$Fsts)
-upperTriangle(snpFstMaNeut, byrow=TRUE) <- lowerTriangle(snpFstMaNeut)
-snpFstMaNeut <- snpFstMaNeut[,pop.order] %>%
-  .[pop.order,]
-snpFstMaNeut[upper.tri(snpFstMaNeut)] <- NA
-snpFstMaNeut <- as.data.frame(snpFstMaNeut)
-
-snpFstMaNeut$Pop = factor(row.names(snpFstMaNeut), levels = unique(pop.order))
-
-snpQMaNeut <- as.matrix(fk.fstNeut$Pvalues)
-upperTriangle(snpQMaNeut, byrow=TRUE) <- lowerTriangle(snpQMaNeut)
-snpQMaNeut <- snpQMaNeut[,pop.order] %>%
-  .[pop.order,]
-snpQMaNeut[upper.tri(snpQMaNeut)] <- NA
-snpQMaNeut <- as.data.frame(snpQMaNeut)
-snpQMaNeut$Pop = factor(row.names(snpQMaNeut), levels = unique(pop.order))
-
-snpFstMaNeut$Pop = factor(row.names(snpFstMaNeut), levels = unique(pop.order))
-snpFstNeut = melt(snpFstMaNeut, id.vars = "Pop", value.name = "Fst", variable.name = "Pop2", na.rm = TRUE)
-snpFstNeut = snpFstNeut[snpFstNeut$Pop != snpFstNeut$Pop2,]
-snpFstNeut$Fst = round(snpFstNeut$Fst, 3)
-snpFstNeut = snpFstNeut %>% mutate(Fst = replace(Fst, Fst < 0, 0))
-head(snpFstNeut)
-
-snpQNeut = melt(snpQMaNeut, id.vars = "Pop", value.name = "Pval", variable.name = "Pop2", na.rm = TRUE)
-snpQNeut = snpQNeut[snpQNeut$Pop != snpQNeut$Pop2,]
-snpQNeut$Qval = p.adjust(snpQNeut$Pval, method = "BH")
-head(snpQNeut)
-
-snpHeatmapANeut = ggplot(data = snpFstNeut, aes(Pop, Pop2, fill = Fst))+
-  geom_tile(color = "white")+
-  scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1),
-                       space = "Lab", name = expression(paste(italic("F")[ST])))+
-  geom_text(data = snpFstNeut, aes(Pop, Pop2, label = Fst), color = ifelse(snpQNeut$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQNeut$Qval < 0.05, 6, 5)) +
-  guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
-  scale_y_discrete(position = "right")+
-  scale_x_discrete(labels = str_wrap(snpFstNeut$Pop, width = 6)) +
-  #ggtitle("   SNP") +
-  theme_minimal()
-
-snpHeatmapNeut = snpHeatmapANeut + theme(
-  axis.text.x = element_text(vjust = 1, size = 16, hjust = 0.5, color = "black"),
-  axis.text.y = element_text(size = 16, color = "black"),
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  legend.position = "right",
-  legend.direction = "vertical",
-  legend.title = element_text(size = 16),
-  legend.text = element_text(size = 14),
-  plot.title = element_text(size = 16)
-)
-
-snpHeatmapNeut
-
-ggsave("../figures/snpHeatMapNeut.tiff", plot = snpHeatmapNeut, width = 34, height = 15, units = "cm", dpi = 300)
+ggplot(outAlleleFreq, aes(x=AvgDepth, y=MIF)) + geom_point()+ geom_smooth(method=lm)
 ```
 
 ## SNPs potentially under selection
@@ -733,8 +648,8 @@ names(genes) = c("chromo","start","end","gene")
 genes$start = genes$start -2000
 genes$end = genes$end +2000
 
-gnames = read.table("mcav_gnames.txt", sep = "\t")
-names(gnames) = c("gene", "protein")
+gnames = read.table("mcav_cog.txt", sep = "\t")
+names(gnames) = c("gene", "cog", "protein")
 
 genes = full_join(genes, gnames, by = "gene")
 genes$protein=as.character(genes$protein)
@@ -758,23 +673,21 @@ outsByGene
 outsAnno = outsByGene %>% filter(protein != "unknown")
 outsAnno
 
-df_uniq <- unique(outsAnno$locus)
-length(df_uniq)
+#df_uniq <- unique(outsAnno$locus)
+#length(df_uniq)
 
-write.csv(x=outsAnno, file="annotedOutliers.csv")
+write.csv(x=outsAnno, file="annotatedOutliers.csv")
 
 ```
-```{r, bayescanOutliers}
+
+```{r, highlySignifOuts}
 source('plot_R.r')
 
-#install.packages("boa")
-library(boa)
-source('plot_R.r')
-dat = read.table("fkMcavDepth.baye_fst.txt",header=T)
+dat = read.table("fkMcav.baye_fst.txt",header=T)
 head(dat)
-table(dat[,"qval_g"]<0.1)
-outsDepth=which(dat[,"qval_g"]<0.1)
-plot_bayescan("fkMcavDepth.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outsDepth)
+table(dat[,"qval"]<0.01)
+highOuts=which(dat[,"qval"]<0.01)
+plot_bayescan("fkMcav.baye_fst.txt",FDR=0.01,add_text=F,size=0.5,highlight=highOuts)
 
 genes = read.table("mcav_gene_regions.tab")
 names(genes) = c("chromo","start","end","gene")
@@ -783,8 +696,8 @@ names(genes) = c("chromo","start","end","gene")
 genes$start = genes$start -2000
 genes$end = genes$end +2000
 
-gnames = read.table("mcav_gnames.txt", sep = "\t")
-names(gnames) = c("gene", "protein")
+gnames = read.table("mcav_cog.txt", sep = "\t")
+names(gnames) = c("gene", "cog", "protein")
 
 genes = full_join(genes, gnames, by = "gene")
 genes$protein=as.character(genes$protein)
@@ -797,19 +710,19 @@ head(genes)
 snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
 snpLoci$locus = c(1:nrow(snpLoci))
 
-outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
-  filter(locus %in% outsDepth) %>%
+highOutsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
+  filter(locus %in% highOuts) %>%
   full_join(., genes, by = "chromo") %>% 
   filter(position>start, position<end)
 
-outsByGene
+highOutsByGene
 
 #only show annotated genes
-outsAnno = outsByGene %>% filter(protein != "unknown")
-outsAnno
+highOutsAnno = highOutsByGene %>% filter(protein != "unknown")
+highOutsAnno
 
-df_uniq <- unique(outsAnno$locus)
+df_uniq <- unique(highOutsAnno$locus)
 length(df_uniq)
 
-write.csv(x=outsAnno, file="annotedOutliersDepth.csv")
+write.csv(x=highOutsAnno, file="annotedSignificantOutliers.csv")
 ```
