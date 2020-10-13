@@ -118,7 +118,7 @@ done
 export GENOME_REF=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/Mcavernosa_July2018.fasta
 
 
-FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -baq 1 -ref $GENOME_REF -maxDepth 25700"
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -baq 1 -ref $GENOME_REF -maxDepth 2570"
 TODO="-doQsDist 1 -doDepth 1 -doCounts 1"
 angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out dd
 
@@ -131,7 +131,7 @@ FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 30 -minInd 205 -snp_pval
 TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 32 -doPost 1 -doGlf 2"
 angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out noSamplesConcat
 
-NSITES=`zcat noSamplesConcat.beagle.gz | wc -l`
+NSITES=`zcat noSamplesConcat.mafs.gz | wc -l`
 echo $NSITES
 ## 13,819 SNPs
 
@@ -271,7 +271,7 @@ srun angsd -b bams -GL 1 $FILTERS $TODO -P 1 -out ddClones
 
 # summarizing results (using modified script by Matteo Fumagalli)
 
-Rscript ~/bin/plotQC.R ddClones > qranks
+srun Rscript ~/bin/plotQC.R ddClones > qranks
 
 # proportion of sites covered at >5x:
 

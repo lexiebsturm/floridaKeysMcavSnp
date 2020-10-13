@@ -241,6 +241,8 @@ heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) +
   theme_bw()
 heteroPlot
 
+my_data <- read.table(file.choose())
+mean(my_data$V4)
 ```
 ## PCoA with IBS
 ```{r, PCoA with IBS}
@@ -273,7 +275,7 @@ snpPCoA$depth = factor(snpPCoA$depth, levels(snpPCoA$depth)[c(2,1)])
 fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop, shape = depth, linetype = depth)) +
   geom_hline(yintercept = 0, color = "gray90", size = 0.5) +
   geom_vline(xintercept = 0, color = "gray90", size = 0.5) +
-  stat_ellipse(data = subset(snpPCoA, type = "t", geom = "polygon", alpha = 0.1)) + #ellipse
+  stat_ellipse(data = subset(snpPCoA, type = "t", level=0.95, geom = "polygon", alpha = 0.1)) + #ellipse
   scale_linetype_manual(values=c(1,2), breaks=c("Shallow","Mesophotic"), name = "Depth Zone")+
   geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3, show.legend = FALSE, guide=FALSE) + #individual's points indicated by circles
   scale_shape_manual(values = c(24,25), breaks=c("Shallow","Mesophotic"), name = "Depth Zone") +
@@ -330,6 +332,17 @@ set.seed(694)
 fk.fst <- stamppFst(fkGenlightPopDepth, nboots = 99, percent = 95, nclusters = 4) #99 permutations
 fk.fst$Fsts
 fk.fst$Pvalues
+
+pca.1 <- glPca(fkGenlightPopDepth, nf=300, n.cores=1) 
+
+# proportion of explained variance by first three axes
+pca.1$eig[1]/sum(pca.1$eig) # proportion of variation explained by 1st axis
+pca.1$eig[2]/sum(pca.1$eig) # proportion of variation explained by 2nd axis 
+pca.1$eig[3]/sum(pca.1$eig) # proportion of variation explained by 3rd axis
+
+#####K-Means Clustering and DAPC
+grp <- find.clusters(fkGenlightPopDepth, max.n.clust=11, glPca = pca.1, perc.pca = 100, n.iter=1e6, n.start=1000) 
+
 
 pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
 
@@ -400,19 +413,93 @@ ggsave("../figures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15,
 # admixedSamples=filter(df1, cluster1 < 0.75, cluster2 < 0.75, cluster3 < 0.75, cluster4 < 0.75)
 # count(admixedSamples$pop)
 
-df <- read.csv("fkMcavNoClones_k4.csv")
-df$sample <- factor(df$sample, levels= df$sample[order(-df$cluster4, df$cluster2)])
-mdat = melt(df, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
-mdat$pop=as.factor(mdat$pop)
-mdat$pop = factor(mdat$pop, levels(mdat$pop)[c(6,5,4,3,2,1,8,7)])
-levels(mdat$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+###Cluster K=2
+fkK2 <- read.csv("fkMcavNoClones_k2.csv")
+fkK2$sample = factor(fkK2$sample, levels = fkK2$sample[order(-fkK2$cluster2)])
+mdat2 = melt(fkK2, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+mdat2$pop=as.factor(mdat2$pop)
+mdat2$pop = factor(mdat2$pop, levels(mdat2$pop)[c(6,5,4,3,2,1,8,7)])
+levels(mdat2$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
-p = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry)) +
-  geom_bar(stat="identity", position="stack") +
-  facet_grid(.~pop, drop=TRUE, space="free", scales="free")
-#col2 = c("turquoise", "blue", "green", "purple")
-#names(col2) = levels(mdat$Ancestry)
-p2 = ggplot(mdat, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
+p2 = ggplot(mdat2, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
+  geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
+  facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
+  labs(x = "Population", y = "Ancestry") +
+  #ggtitle("K4 NGSAdmixture Plot") +
+  theme(plot.title = element_text(hjust = 0.5),
+  panel.grid=element_blank(),
+  panel.background=element_rect(fill=NA, colour="grey25"),
+  panel.spacing.x=grid:::unit(0, "lines"),
+  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
+  #axis.text.x=element_text(size=12, angle=90)
+  axis.text.x = element_blank(),
+  axis.ticks.x=element_blank(),
+  strip.background=element_blank(),
+  strip.text=element_text(size=12, angle=90),
+  legend.key=element_blank(),
+  legend.position = "none",
+  legend.title = element_blank()) +
+  scale_x_discrete(expand=c(0, 0)) +
+  scale_y_continuous(expand=c(0, 0)) +
+  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 2), name = "Cluster") +
+  guides(fill=guide_legend(override.aes=list(colour=NULL)))
+p2
+
+
+
+
+###Cluster K=3
+fkK3 <- read.csv("fkMcavNoClones_k3.csv")
+fkK3$sample = factor(fkK3$sample, levels = fkK3$sample[order(-fkK3$cluster3)])
+mdat3 = melt(fkK3, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+mdat3$pop=as.factor(mdat3$pop)
+mdat3$pop = factor(mdat3$pop, levels(mdat3$pop)[c(6,5,4,3,2,1,8,7)])
+levels(mdat3$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+
+p3 = ggplot(mdat3, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
+  geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
+  facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
+  labs(x = "Population", y = "Ancestry") +
+  #ggtitle("K4 NGSAdmixture Plot") +
+  theme(plot.title = element_text(hjust = 0.5),
+  panel.grid=element_blank(),
+  panel.background=element_rect(fill=NA, colour="grey25"),
+  panel.spacing.x=grid:::unit(0, "lines"),
+  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
+  #axis.text.x=element_text(size=12, angle=90)
+  axis.text.x = element_blank(),
+  axis.ticks.x=element_blank(),
+  strip.background=element_blank(),
+  strip.text=element_text(size=12, angle=90),
+  legend.key=element_blank(),
+  legend.position = "none",
+  legend.title = element_blank()) +
+  scale_x_discrete(expand=c(0, 0)) +
+  scale_y_continuous(expand=c(0, 0)) +
+  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 3), name = "Cluster") +
+  guides(fill=guide_legend(override.aes=list(colour=NULL)))
+p3
+
+###Cluster K=4
+fkK4 <- read.csv("fkMcavNoClones_k4.csv")
+
+cluster2Pops=fkK4 %>% filter(pop=="Upper Keys-Shallow")
+cluster2Pops = cluster2Pops[order(cluster2Pops$pop, -cluster2Pops$cluster2),]
+
+cluster3Pops=fkK4 %>% filter(pop %in% c("TER-South-Mesophotic", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic"))
+cluster3Pops = cluster3Pops[order(cluster3Pops$pop, -cluster3Pops$cluster3),]
+
+cluster4Pops=fkK4 %>% filter(pop %in% c("TER-South-Shallow", "Lower Keys-Shallow",  "TER-North-Shallow", "TER-North-Mesophotic"))
+cluster4Pops = cluster4Pops[order(cluster4Pops$pop, -cluster4Pops$cluster4),]
+
+snpStr = cluster2Pops %>% add_row(cluster3Pops) %>% add_row(cluster4Pops)
+snpStr$sample <- factor(snpStr$sample, levels= snpStr$sample)
+mdat4 = melt(snpStr, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+mdat4$pop=as.factor(mdat4$pop)
+mdat4$pop = factor(mdat4$pop, levels(mdat4$pop)[c(6,5,4,3,2,1,8,7)])
+levels(mdat4$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+
+p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
   facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
   labs(x = "Population", y = "Ancestry") +
@@ -479,8 +566,9 @@ zooxBoxPlot
 #Zoox Plot
 
 dfZoox = read.csv("zooxCommunity.csv")
-
+dfZoox$Population=as.factor(dfZoox$Population)
 dfZoox$Population = factor(dfZoox$Population, levels = levels(dfZoox$Population)[c(6,5,4,3,2,1,8,7)])
+levels(dfZoox$Population) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 dfZoox = dfZoox[order(dfZoox$Population),]
 dfZoox$Order = c(1:nrow(dfZoox))
@@ -503,15 +591,16 @@ zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
   panel.grid=element_blank(),
   panel.background=element_rect(fill=NA, colour="grey25"),
   panel.spacing.x=grid:::unit(0, "lines"),
-  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
-  #axis.text.x=element_text(size=12, angle=90)
+  panel.border = element_rect(color="black", size=2, linetype="solid"),
+  axis.text.y=element_text(size=14),
   axis.text.x = element_blank(),
+  axis.title.y = element_blank(),
   axis.ticks.x=element_blank(),
   strip.background=element_blank(),
   strip.text=element_text(size=12, angle=90),
   legend.key=element_blank(),
   legend.position = "right",
-  legend.title = element_blank(),
+  #legend.title = element_blank(),
   legend.text = element_text(face = "italic"))
 zooxPlot
 
@@ -637,10 +726,8 @@ outAlleleFreq.lm = lm(MIF ~ AvgDepth, data=outAlleleFreq)
 summary(outAlleleFreq.lm)$r.squared 
 
 ggplot(outAlleleFreq, aes(x=AvgDepth, y=MIF)) + geom_point()+ geom_smooth(method=lm)
-```
 
 ## SNPs potentially under selection
-```{r, snps under selection}
 genes = read.table("mcav_gene_regions.tab")
 names(genes) = c("chromo","start","end","gene")
 
@@ -683,10 +770,10 @@ write.csv(x=outsAnno, file="annotatedOutliers.csv")
 ```{r, highlySignifOuts}
 source('plot_R.r')
 
-dat = read.table("fkMcav.baye_fst.txt",header=T)
-head(dat)
-table(dat[,"qval"]<0.01)
-highOuts=which(dat[,"qval"]<0.01)
+dat2 = read.table("fkMcav.baye_fst.txt",header=T)
+head(dat2)
+table(dat2[,"qval"]<0.01)
+highOuts=which(dat2[,"qval"]<0.01)
 plot_bayescan("fkMcav.baye_fst.txt",FDR=0.01,add_text=F,size=0.5,highlight=highOuts)
 
 genes = read.table("mcav_gene_regions.tab")
@@ -725,4 +812,14 @@ df_uniq <- unique(highOutsAnno$locus)
 length(df_uniq)
 
 write.csv(x=highOutsAnno, file="annotedSignificantOutliers.csv")
+```
+
+```{r, DepthOutliers}
+source('plot_R.r')
+
+dat3 = read.table("fkMcav.baye_fstAbsDepth.txt",header=T)
+head(dat3)
+table(dat3[,"PEP_g"]<0.1)
+depthOuts=which(dat3[,"PEP_g"]<0.1)
+plot_bayescan("fkMcav.baye_fstAbsDepth.txt",FDR=0.1,add_text=F,size=0.5,highlight=depthOuts)
 ```
