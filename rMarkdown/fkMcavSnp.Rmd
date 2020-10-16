@@ -164,8 +164,8 @@ cloneDend = cloneDendA + theme(
   axis.text.x = element_blank(),
   axis.line.x = element_blank(),
   axis.ticks.x = element_blank(),
-  axis.title.y = element_text(size = 12, color = "black", angle = 90),
-  axis.text.y = element_text(size = 10, color = "black"),
+  axis.title.y = element_text(size = 14, color = "black", angle = 90),
+  axis.text.y = element_text(size = 12, color = "black"),
   axis.line.y = element_line(),
   axis.ticks.y = element_line(),
   panel.grid = element_blank(),
@@ -173,13 +173,13 @@ cloneDend = cloneDendA + theme(
   panel.background = element_blank(),
   plot.background = element_blank(),
   legend.key = element_blank(),
-  legend.title = element_text(size = 12),
-  legend.text = element_text(size = 10),
-  legend.position = "left")
+  legend.title = element_text(face="bold", size = 14),
+  legend.text = element_text(size = 14),
+  legend.position = "bottom")
 
 cloneDend
 
-ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 4.75, width = 30, units = "in", dpi = 300)
+ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 5, width = 25, units = "in", dpi = 300)
 ```
 ##Dendrogram no Clones
 ```{r, Dendrogram no Clones, fig.dim = c(13, 4.75)}
@@ -414,6 +414,7 @@ ggsave("../figures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15,
 # count(admixedSamples$pop)
 
 ###Cluster K=2
+colPal2=c("#FFFFCC", "#41B6C4")
 fkK2 <- read.csv("fkMcavNoClones_k2.csv")
 fkK2$sample = factor(fkK2$sample, levels = fkK2$sample[order(-fkK2$cluster2)])
 mdat2 = melt(fkK2, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
@@ -425,30 +426,31 @@ p2 = ggplot(mdat2, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
   facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
   labs(x = "Population", y = "Ancestry") +
-  #ggtitle("K4 NGSAdmixture Plot") +
-  theme(plot.title = element_text(hjust = 0.5),
+  ggtitle("K=2") +
+  theme(plot.title = element_text(size=22),
   panel.grid=element_blank(),
   panel.background=element_rect(fill=NA, colour="grey25"),
   panel.spacing.x=grid:::unit(0, "lines"),
   panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
-  #axis.text.x=element_text(size=12, angle=90)
-  axis.text.x = element_blank(),
+  axis.text.x=element_blank(),
+  axis.text.y = element_text(size=14),
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
   axis.ticks.x=element_blank(),
   strip.background=element_blank(),
-  strip.text=element_text(size=12, angle=90),
+  strip.text=element_blank(),
   legend.key=element_blank(),
   legend.position = "none",
   legend.title = element_blank()) +
   scale_x_discrete(expand=c(0, 0)) +
   scale_y_continuous(expand=c(0, 0)) +
-  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 2), name = "Cluster") +
+  #scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
+  scale_fill_manual(values = colPal2, name = "Cluster") +
   guides(fill=guide_legend(override.aes=list(colour=NULL)))
 p2
 
-
-
-
 ###Cluster K=3
+colPal3=c("#A1DAB4", "#41B6C4", "#225EA8")
 fkK3 <- read.csv("fkMcavNoClones_k3.csv")
 fkK3$sample = factor(fkK3$sample, levels = fkK3$sample[order(-fkK3$cluster3)])
 mdat3 = melt(fkK3, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
@@ -460,23 +462,27 @@ p3 = ggplot(mdat3, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
   facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
   labs(x = "Population", y = "Ancestry") +
-  #ggtitle("K4 NGSAdmixture Plot") +
-  theme(plot.title = element_text(hjust = 0.5),
+  ggtitle("K=3") +
+  theme(plot.title = element_text(size=22),
   panel.grid=element_blank(),
   panel.background=element_rect(fill=NA, colour="grey25"),
   panel.spacing.x=grid:::unit(0, "lines"),
   panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
   #axis.text.x=element_text(size=12, angle=90)
   axis.text.x = element_blank(),
+  axis.title.x = element_blank(),
   axis.ticks.x=element_blank(),
+  axis.text.y = element_text(size=14),
+  axis.title.y = element_text(size=22),
   strip.background=element_blank(),
-  strip.text=element_text(size=12, angle=90),
+  strip.text=element_blank(),
   legend.key=element_blank(),
   legend.position = "none",
   legend.title = element_blank()) +
   scale_x_discrete(expand=c(0, 0)) +
   scale_y_continuous(expand=c(0, 0)) +
-  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 3), name = "Cluster") +
+  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
+  #scale_fill_manual(values = colPal3, name = "Cluster") +
   guides(fill=guide_legend(override.aes=list(colour=NULL)))
 p3
 
@@ -503,8 +509,8 @@ p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
   facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
   labs(x = "Population", y = "Ancestry") +
-  #ggtitle("K4 NGSAdmixture Plot") +
-  theme(plot.title = element_text(hjust = 0.5),
+  ggtitle("K=4") +
+  theme(plot.title = element_text(size=22),
   panel.grid=element_blank(),
   panel.background=element_rect(fill=NA, colour="grey25"),
   panel.spacing.x=grid:::unit(0, "lines"),
@@ -512,8 +518,11 @@ p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   #axis.text.x=element_text(size=12, angle=90)
   axis.text.x = element_blank(),
   axis.ticks.x=element_blank(),
+  axis.title.x = element_text(size=16),
+  axis.text.y = element_text(size=14),
+  axis.title.y = element_blank(),
   strip.background=element_blank(),
-  strip.text=element_text(size=12, angle=90),
+  strip.text=element_text(size=20, angle=45),
   legend.key=element_blank(),
   legend.position = "none",
   legend.title = element_blank()) +
@@ -521,9 +530,12 @@ p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   scale_y_continuous(expand=c(0, 0)) +
   scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
   guides(fill=guide_legend(override.aes=list(colour=NULL)))
-p2
+p4
 
-ggsave("../figures/admixturePlot.tiff", plot = p2, width = 30, height = 15, units = "cm", dpi = 300)
+combinedAdmix = (p2 / p3 / p4)
+ggsave("../figures/combinedAdmix.tiff", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
+
+ggsave("../figures/admixturePlot.tiff", plot = p4, width = 30, height = 15, units = "cm", dpi = 300)
 ```
 
 ## Zoox and Depth
@@ -711,21 +723,25 @@ source('plot_R.r')
 dat = read.table("fkMcav.baye_fst.txt",header=T)
 head(dat)
 table(dat[,"qval"]<0.1)
+dat$locus = c(1:nrow(dat))
 outs=which(dat[,"qval"]<0.1)
 plot_bayescan("fkMcav.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outs)
 
+outliers= dat %>% filter(qval < 0.1)
+outsQval=select(outliers, qval, locus) 
+
 
 #Minor Allele Frequencies of Outliers Across Populations
-outAlleleFreq=read.csv("outlierAlleleFreqs.csv")
-outAlleleFreqPlot <- ggplot(outAlleleFreq, aes(x=PopDepth, y=MIF)) + 
-  geom_boxplot()+
-  theme_bw()
-outAlleleFreqPlot
-
-outAlleleFreq.lm = lm(MIF ~ AvgDepth, data=outAlleleFreq)
-summary(outAlleleFreq.lm)$r.squared 
-
-ggplot(outAlleleFreq, aes(x=AvgDepth, y=MIF)) + geom_point()+ geom_smooth(method=lm)
+# outAlleleFreq=read.csv("outlierAlleleFreqs.csv")
+# outAlleleFreqPlot <- ggplot(outAlleleFreq, aes(x=PopDepth, y=MIF)) + 
+#   geom_boxplot()+
+#   theme_bw()
+# outAlleleFreqPlot
+# 
+# outAlleleFreq.lm = lm(MIF ~ AvgDepth, data=outAlleleFreq)
+# summary(outAlleleFreq.lm)$r.squared 
+# 
+# ggplot(outAlleleFreq, aes(x=AvgDepth, y=MIF)) + geom_point()+ geom_smooth(method=lm)
 
 ## SNPs potentially under selection
 genes = read.table("mcav_gene_regions.tab")
@@ -751,6 +767,8 @@ snpLoci$locus = c(1:nrow(snpLoci))
 
 outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
   filter(locus %in% outs) %>%
+  #filter(locus %in% outsQval) %>%
+  full_join(., outsQval, by = "locus") %>%
   full_join(., genes, by = "chromo") %>% 
   filter(position>start, position<end)
 
