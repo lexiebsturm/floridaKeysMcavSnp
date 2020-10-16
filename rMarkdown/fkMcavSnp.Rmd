@@ -772,6 +772,20 @@ outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>%
   full_join(., genes, by = "chromo") %>% 
   filter(position>start, position<end)
 
+outsByGene = outsByGene[c(1:3,5:9,4)]
+
+for(i in 1:nrow(outsByGene)) {
+  if (outsByGene$qval[i] < .01) {
+    outsByGene$sig[i] = "***"
+  } else {
+    if (outsByGene$qval[i] < .05) {
+      outsByGene$sig[i] = "**"
+    } else {
+      outsByGene$sig[i] = "*"
+    }
+  }
+}
+
 outsByGene
 
 #only show annotated genes
