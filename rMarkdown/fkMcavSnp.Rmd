@@ -792,8 +792,10 @@ outsByGene
 outsAnno = outsByGene %>% filter(protein != "unknown")
 outsAnno
 
-#df_uniq <- unique(outsAnno$locus)
-#length(df_uniq)
+# df_uniq <- unique(outsAnno$locus)
+# length(df_uniq)
+# df_uniq1 <- unique(outsAnno$gene)
+# length(df_uniq1)
 
 write.csv(x=outsAnno, file="annotatedOutliers.csv")
 
@@ -842,6 +844,8 @@ highOutsAnno
 
 df_uniq <- unique(highOutsAnno$locus)
 length(df_uniq)
+df_uniq1 <- unique(highOutsAnno$gene)
+length(df_uniq1)
 
 write.csv(x=highOutsAnno, file="annotedSignificantOutliers.csv")
 ```
