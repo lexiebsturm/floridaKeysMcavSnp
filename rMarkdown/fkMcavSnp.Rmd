@@ -275,7 +275,7 @@ snpPCoA$depth = factor(snpPCoA$depth, levels(snpPCoA$depth)[c(2,1)])
 fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop, shape = depth, linetype = depth)) +
   geom_hline(yintercept = 0, color = "gray90", size = 0.5) +
   geom_vline(xintercept = 0, color = "gray90", size = 0.5) +
-  stat_ellipse(data = subset(snpPCoA, type = "t", level=0.95, geom = "polygon", alpha = 0.1)) + #ellipse
+  stat_ellipse(data = subset(snpPCoA, type = "t", geom = "polygon", alpha = 0.1)) + #ellipse
   scale_linetype_manual(values=c(1,2), breaks=c("Shallow","Mesophotic"), name = "Depth Zone")+
   geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3, show.legend = FALSE, guide=FALSE) + #individual's points indicated by circles
   scale_shape_manual(values = c(24,25), breaks=c("Shallow","Mesophotic"), name = "Depth Zone") +
@@ -324,6 +324,7 @@ amova
 set.seed(1999)
 amovasignif <- randtest(amova, nrepet = 99) #Calculates significance levels of the AMOVA with 99 permutations
 amovasignif
+plot(amovasignif)
 
 fkGenlightPopDepth$pop=as.factor(fkGenlightPopDepth$pop)
 fkGenlightPopDepth$pop = factor(fkGenlightPopDepth$pop, levels(fkGenlightPopDepth$pop)[c(4,3,2,1,5,6,8,7)])
