@@ -352,7 +352,6 @@ launcher_creator.py -j ngsAdmix -n ngsAdmix -q shortq7 -N 3 -t 06:00:00
 sbatch ngsAdmix
 
 > logfile
-
 for log in *.log; do
 grep -Po 'like=\K[^ ]+' $log >> logfile;
 done
@@ -361,7 +360,9 @@ done
 R
 # you are now using R in the terminal
 logs <- as.data.frame(read.table("logfile"))
+
 logs$K <- c(rep("10", 10), rep("11", 10), rep("1", 10), rep("2", 10), rep("3", 10), rep("4", 10), rep("5", 10), rep("6", 10), rep("7", 10), rep("8", 10), rep("9", 10))
+
 write.table(logs[, c(2, 1)], "logfile_formatted", row.names = F, col.names = F, quote = F)      
 quit()
 
