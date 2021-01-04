@@ -40,7 +40,7 @@ setwd('../data')
 For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
 ```{r, load packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr", "rgdal", "broom", "rgeos", "ggmap", "moments", "car", "multcompView", "lsmeans")
+pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr", "rgdal", "broom", "rgeos", "ggmap", "moments", "car", "multcompView", "lsmeans", "ggsn", "sf")
 ```
 
 # Figures and analyses
@@ -97,11 +97,12 @@ pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hier
                   y.max = 26, 
                   dist = 50, transform = TRUE, 
                   model = "WGS84", 
-                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)
-   
-
- ggsave("../figures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+  annotation_north_arrow(location= "topright", height = unit(1, "cm"),
+width = unit(0.75, "cm"), style = north_arrow_orienteering)
  
+ggsave("../figures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+ggsave("../figures/figure1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
 
 ## Dendrogram with Clones
@@ -308,6 +309,8 @@ fkSnpPcoaPlot = fkSnpPcoaPlotA +
 fkSnpPcoaPlot
 
 ggsave("../figures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
+ggsave("../figures/figure2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
+
 ```
 
 ## AMOVA and Pairwise Fst
