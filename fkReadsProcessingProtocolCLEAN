@@ -441,6 +441,14 @@ removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FD
 srun sed 's/^##fileformat=VCFv4.2(angsd version)/##fileformat=VCFv4.2/' fkVcfOutliers.vcf > fk1VcfOutliers.vcf
 
 removeBayescanOutliers.pl bayescan=fkMcav.baye_fst.txt vcf=fkMcavNoClones.vcf FDR=0.1 mode=delete > fkVcfNeutral.vcf
+
+#Download bayescenv (had to run it on local computer)
+cd /Users/student/bin/bayescenv-1.1/bin/mac64 #where the command line bayescenv is downloaded
+#scp the fkMcav.bayescan
+nano envDepth
+32.2 16.6 36.2 25.5 17.8 31.4 40.5 23.6 #average depths of populations in order of the fkMcav.bayescan input doc
+./bayescenv fkMcav.bayescan -env envDepth
+
 ################################################################################
 
 #Calculating population parameters no filter on excess heterozygosity
