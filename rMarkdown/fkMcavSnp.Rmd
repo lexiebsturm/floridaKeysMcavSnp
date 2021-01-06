@@ -152,9 +152,10 @@ cloneDendA = ggplot() +
   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
   scale_shape_manual(values=c(24, 25), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
   #geom_hline(yintercept = 0.1, color = "red", lty = 5, size = 0.75) + # creating a dashed line to indicate a clonal distance threshold
-  geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = x, y = (y - .015), label = label), angle = 90) + # spacing technical replicates further from leaf
-  geom_text(data = subset(cloneDendPoints, subset = !label %in% techReps), aes(x = x, y = (y - .010), label = label), angle = 90) +
-  geom_text(data = subset(cloneDendPoints, subset = label %in% c("218", "223", "221", "226")), aes(x = (x + .5), y = (y - .018), label = "*"), angle = 90, size = 6) + # labeling natural clones with asterisks
+  geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = x, y = (y - .015), label = label), angle = 90, size=5.5) + # spacing technical replicates further from leaf
+  #geom_text(data = subset(cloneDendPoints, subset = !label %in% techReps), aes(x = x, y = (y - .010), label = label), angle = 90) +
+  geom_text(data = subset(cloneDendPoints, subset = label %in% c("218", "223", "221", "226")), aes(x = (x+0.5), y = (y - .008), label = "*"), angle = 90, size = 10) + # labeling natural clones with asterisks
+   #geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = (x + .5), y = (y - .008), label = "†"), size = 6) + # labeling tech reps with dagger
   #coord_cartesian(xlim = c(3, 84)) +
   labs(y = "Genetic distance (1 - IBS)") +
   guides(fill = guide_legend(override.aes = list(shape = 21)))+
@@ -165,8 +166,8 @@ cloneDend = cloneDendA + theme(
   axis.text.x = element_blank(),
   axis.line.x = element_blank(),
   axis.ticks.x = element_blank(),
-  axis.title.y = element_text(size = 14, color = "black", angle = 90),
-  axis.text.y = element_text(size = 12, color = "black"),
+  axis.title.y = element_text(size = 16, color = "black", angle = 90),
+  axis.text.y = element_text(size = 14, color = "black"),
   axis.line.y = element_line(),
   axis.ticks.y = element_line(),
   panel.grid = element_blank(),
@@ -174,13 +175,13 @@ cloneDend = cloneDendA + theme(
   panel.background = element_blank(),
   plot.background = element_blank(),
   legend.key = element_blank(),
-  legend.title = element_text(face="bold", size = 14),
-  legend.text = element_text(size = 14),
+  legend.title = element_text(face="bold", size = 16),
+  legend.text = element_text(size = 16),
   legend.position = "bottom")
 
 cloneDend
 
-ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 5, width = 25, units = "in", dpi = 300)
+ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 8, width = 30, units = "in", dpi = 300)
 ```
 ##Dendrogram no Clones
 ```{r, Dendrogram no Clones, fig.dim = c(13, 4.75)}
