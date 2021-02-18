@@ -45,6 +45,69 @@ pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hier
 
 # Figures and analyses
 ##Sampling Map
+```{r, permit map} 
+ # set factors to false 
+ #options(stringsAsFactors = FALSE) 
+ 
+ fknmsPermit <- readOGR("/Users/student/Documents/GitHub/floridaKeysMcavSnp/data/fknmsZones/FKNMS_Marine_Zones_1-polygon.shp") 
+ fknmsshpfilePermit <- spTransform(fknmsPermit, "+init=epsg:4326") #WGS84 
+ fknmsdtaPermit <- tidy(fknmsshpfilePermit, group=group) 
+ 
+fknms <- readOGR("/Users/student/Documents/Florida\ Keys/Maps/fknms_py2/fknms_py.shp") 
+ fknmsshpfile <- spTransform(fknms, "+init=epsg:4326") #WGS84 
+ fknmsdta <- tidy(fknmsshpfile, group=group) 
+ 
+ 
+ fkSites = read.csv("sample-sites.csv", header=TRUE) 
+ levels(fkSites$General.Site) 
+ fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys")) 
+ 
+ baseMap <- get_stamenmap(bbox = c(left = -83, 
+                                 bottom = 24, 
+                                 right = -80, 
+                                 top = 26), 
+                        maptype = "terrain-background", 
+                        crop = FALSE, 
+                        zoom = 10) 
+ 
+ # plot map 
+ #levels(fkSites$General.Site) 
+ #fkSites$General.Site = factor(fkSites$General.Site, levels(fkSites$General.Site)[c(2,3,1,4)]) 
+ 
+ fkMapPermit=ggmap(baseMap)+ 
+   geom_polygon(aes(x=long, y=lat, group=group), 
+                data=fknmsdtaPermit, 
+                color="dark red", alpha=.2, size=.2) + 
+     geom_polygon(aes(x=long, y=lat, group=group), 
+                data=fknmsdta, 
+                color="green", alpha=.2, size=.2) + 
+   geom_point(data = fkSites, size= 4, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
+   #scale_fill_manual(values = brewer.pal(name = "Set3", n = 4), name = "Population") + 
+   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DRTS", "DRTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
+   scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+ 
+   scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+ 
+   guides(fill = guide_legend(override.aes = list(shape = 22, size= 4)))+ 
+   guides(shape = guide_legend(override.aes = list(size= 4)))+ 
+   #labs(x="Longitude", y="Latitutde")+ 
+   theme_bw()+ 
+   theme(legend.position = "right", 
+         axis.title.x = element_blank(), 
+         axis.title.y = element_blank())+ 
+   ggsn::scalebar(x.min = -83, 
+                  y.min = 24, 
+                  x.max = -80, 
+                  y.max = 26, 
+                  dist = 50, transform = TRUE, 
+                  model = "WGS84", 
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+                annotation_north_arrow(location= "topright", height = unit(1, "cm"),
+                width = unit(0.75, "cm"), style = north_arrow_orienteering)
+ 
+ fkMapPermit
+#ggsave("../figures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+#ggsave("../figures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
+```
+
 ```{r, sampling map} 
  # set factors to false 
  #options(stringsAsFactors = FALSE) 
