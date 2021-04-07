@@ -12,7 +12,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.align = 'left')
-knitr::opts_knit$set(root.dir = '../data')
+knitr::opts_knit$set(root.dir = '../revisedData')
 options(width = 88, scipen = 4)
 ```
 
@@ -34,7 +34,7 @@ Make sure to set the working directory:
 `setwd("~/path/to/directory/with/data")`
 
 ```{r, set working directory}
-setwd('../data')
+setwd('../revisedData')
 ```
 
 For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
@@ -50,7 +50,7 @@ pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hier
  # set factors to false 
  #options(stringsAsFactors = FALSE) 
  
- fknms <- readOGR("/Users/student/Documents/Florida\ Keys/Maps/fknms_py2/fknms_py.shp") 
+ fknms <- readOGR("/Users/student/Documents/GitHub/floridaKeysMcavSnp/revisedData/fknms_py2/fknms_py.shp") 
  fknmsshpfile <- spTransform(fknms, "+init=epsg:4326") #WGS84 
  fknmsdta <- tidy(fknmsshpfile, group=group) 
  
@@ -100,8 +100,8 @@ pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hier
                 annotation_north_arrow(location= "topright", height = unit(1, "cm"),
                 width = unit(0.75, "cm"), style = north_arrow_orienteering)
  
-ggsave("../figures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
-ggsave("../figures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
+ggsave("../revisedFigures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+ggsave("../revisedFigures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
 
 ## Dendrogram with Clones
@@ -180,7 +180,7 @@ cloneDend = cloneDendA + theme(
 
 cloneDend
 
-ggsave("../figures/cloneDend.tiff", plot = cloneDend, height = 8, width = 30, units = "in", dpi = 300)
+ggsave("../figuresRevised/cloneDend.tiff", plot = cloneDend, height = 8, width = 30, units = "in", dpi = 300)
 ```
 ##Dendrogram no Clones
 ```{r, Dendrogram no Clones, fig.dim = c(13, 4.75)}

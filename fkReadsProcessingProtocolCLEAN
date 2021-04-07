@@ -1,3 +1,4 @@
+
 koko login: asturm2017@koko-login.hpc.fau.edu
 
 ###FK MCAV Reads Processing Protocol
@@ -159,15 +160,271 @@ cat filt0 | perl -pe 's/filter /filter -Q33 /' > filt
 #if you did NOT run the line above, run this one:
 mv filt0 filt
 
-eator.py -j filt -n filt -t 1:00:00 -e asturm2017@fau.edu -q shortq7
+launcher_creator.py -j filt -n filt -t 1:00:00 -e asturm2017@fau.edu -q shortq7
 sbatch filt.slurm
 
 ################################################################################
+#After initial reviews there needed to be some reanalysis all of this between the >>>> was moved to "oldAnalysis"
+
+mkdir sams
+srun cp ./highQualityConcat/*.trim ./sams
+
+#Make sure your references are indexed with bowtie2
+cd ~/genomes/symbiontGenomes/singleChromo
+
+#Here I made a mega concatenated version of genomes for Symbiodinium, Breviolum, Cladocopium, and Durusdinium. The papers these are from and which chromosomes each genus is associated with are listed.
+
+#Symbiodinium microadriacticum (Aranda et al. 2016), Chromosomes 1-5
+#Breviolum minutum (Shoguchi et al. 2013), Chromosomes 6-9
+#Cladocopium goreaui (Liu et al. 2018), Chromosomes 10-15
+#Durusdinium trenchii (Shoguchi et al. 2021), Chromosomes 16-19
+
+export GENOME_FASTA=~/genomes/symbiontGenomes/singleChromo/concatZooxGenomes.fasta
+
+echo 'bowtie2-build $GENOME_FASTA $GENOME_FASTA' > btb
+launcher_creator.py -j btb -n btb -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch btb.slurm
+
+srun samtools faidx $GENOME_FASTA
+
+# First need to Map reads to algal symbiont reference genome with soft-clipping (Bowtie2 --local option) to avoid indels near read ends
+GENOME_FASTA=~/genomes/symbiontGenomes/singleChromo/concatZooxGenomes.fasta.gz
+
+cd sams
+mkdir zoox
+mkdir unmapped
+
+#2bRAD_bowtie2_launch_zoox.pl This new script aligns trim files to the concatenated algal symbiont genomes. It then produces fastq files with aligned reads, fastq files with unaligned reads, and sam files which allow us to calculate the alignment rates to the algal symbiont genomes.
+
+#Adapted the bowtie script to do the following
+
+./2bRAD_bowtie2_launch_zoox.pl '\.trim$' ~/genomes/symbiontGenomes/singleChromo/concatZooxGenomes.fasta.gz > maps1
+launcher_creator.py -N 10 -j maps1 -n maps1 -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch maps1.slurm
+
+>alignmentRates
+for F in `ls *trim`; do
+M=`grep -E '^[ATGCN]+$' $F | wc -l | grep -f - maps.e* -A 4 | tail -1 | perl -pe 's/maps\.e\d+-|% overall alignment rate//g'` ;
+echo "$F.sam $M">>alignmentRates;
+done
+
+##############################################################################
+cd ~/2bRAD/floridaKeys/sams/zoox
+
+mkdir zooxOnly
+mkdir zooxAndMcav
+
+
+./2bRAD_bowtie2_launch_dual_filter.pl '\.fq$' ~/genomes/Mcav_genome/Mcavernosa_July2018.fasta > mapsZoox2Mcav
+launcher_creator.py -N 10 -j mapsZoox2Mcav -n mapsZoox2Mcav -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch mapsZoox2Mcav.slurm
+
+#As a sanity check
+cd zooxOnly
+2bRAD_bowtie2_launch.pl '\.fq$' ~/genomes/symbiontGenomes/singleChromo/concatZooxGenomes.fasta.gz > zoox2Zoox
+launcher_creator.py -N 5 -j zoox2Zoox -n zoox2Zoox -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch zoox2Zoox.slurm
+
+#Check the zoox2Zoox.e* file and make sure these have 100% alignment rate
+
+mkdir ../zooxSams
+
+################################################################################
+mkdir zooxBamsNoClones
+srun cp ./zooxSams/*.sam ./zooxBamsNoClones
+
+#Compressing, sorting and indexing the SAM files, so they become BAM files:
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+launcher_creator.py -j s2b -n s2b -t 1:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
+sbatch s2b.slurm
+
+################################################################################
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doBcf 1 -doPost 1 -doGlf 2"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b zooxBamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkZooxNoClones
+
+# how many SNPs?
+NSITES=`zcat fkZooxNoClones.mafs.gz | wc -l`
+echo $NSITES
+################################################################################
+cd ~/2bRAD/floridaKeys/sams/unmapped
+
+2bRAD_bowtie2_launch.pl '\.fq$' ~/genomes/Mcav_genome/Mcavernosa_July2018.fasta > mapsUn2Mcav
+launcher_creator.py -N 10 -j mapsUn2Mcav -n mapsUn2Mcav -t 6:00:00 -e asturm2017@fau.edu -q shortq7
+sbatch mapsUn2Mcav.slurm
+
+mkdir ../mcavSams
+
+
+#Compressing, sorting and indexing the SAM files, so they become BAM files:
+>s2b
+for file in *.sam; do
+echo "samtools sort -O bam -o ${file/.sam/}.bam $file && samtools index ${file/.sam/}.bam">>s2b;
+done
+
+launcher_creator.py -j s2b -n s2b -t 6:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
+sbatch s2b.slurm
+
+################################################################################
+mkdir mcavANGSDClones
+srun mv ./mcavBams/*bam* ./mcavANGSDClones/
+
+ls *.bam > bamsClones
+
+# angsd settings:
+# -minMapQ 20 : only highly unique mappings (prob of erroneous mapping = 1%)
+# -baq 1 : realign around indels (not terribly relevant for 2bRAD reads mapped with --local option)
+# -maxDepth : highest total depth (sum over all samples) to assess; set to 10x number of samples
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -maxDepth 2230"
+
+# T O   D O :
+TODO="-doQsDist 1 -doDepth 1 -doCounts 1 -dumpCounts 2"
+srun angsd -b bamsClones -GL 1 $FILTERS $TODO -P 1 -out ddClones
+
+# summarizing results (using modified script by Matteo Fumagalli)
+srun --mem=200GB Rscript ~/bin/plotQC.R ddClones > qranks
+
+# proportion of sites covered at >5x:
+
+cat qranks
+
+# scp dd.pdf to laptop to look at distribution of base quality scores, fraction of sites in each sample passing coverage thresholds, and fraction of sites passing genotyping rates cutoffs. Use these to guide choices of -minQ,  -minIndDepth and -minInd filters in subsequent ANGSD runs
+
+##ANGSD WITH NEW FILTERS W CLONES
+
+# Note: PCA and Admixture are not supposed to be run on data that contain clones or genotyping replicates. For PCA, these can be removed without rerunning ANGSD from the IBS distance matrix; but for ngsAdmix ANGSD must be rerun.
+
+# Generating genotype likelihoods from highly confident (non-sequencing-error) SNPs
+# set minInd to 75-80% of your total number of bams
+# if you expect very highly differentiated populations with nearly fixed alternative alleles, remove '-hwe_pval 1e-5' form FILTERS
+# -doGeno 8 : genotype likelihood format setting for ngsLD; if you want to run PCA, use -doGeno 32 (but I recommend using ibsMat for all ordination work)
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 168 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doBcf 1 -doPost 1 -doGlf 2"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b bamsClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavClones
+
+# how many SNPs?
+NSITES=`zcat fkMcavClones.mafs.gz | wc -l`
+echo $NSITES
+
+#scp the ibs matrix to identify clones
+
+################################################################################
+
+mkdir mcavBamsNoClones
+srun cp ./mcavBams/*.bam* ./mcavBamsNoClone
+
+#Manually remove clones and technical replicates based on IBS dendrogram
+#YOU SHOULD HAVE 215 FILES
+
+################################################################################
+mkdir mcavANGSDNoClones
+srun cp ./mcavBamsNoClone/*bam* ./mcavANGSDNoClones
+
+# Note: PCA and Admixture are not supposed to be run on data that contain clones or genotyping replicates. For PCA, these can be removed without rerunning ANGSD from the IBS distance matrix; but for ngsAdmix ANGSD must be rerun.
+
+# Generating genotype likelihoods from highly confident (non-sequencing-error) SNPs
+# set minInd to 75-80% of your total number of bams
+# if you expect very highly differentiated populations with nearly fixed alternative alleles, remove '-hwe_pval 1e-5' form FILTERS
+# -doGeno 8 : genotype likelihood format setting for ngsLD; if you want to run PCA, use -doGeno 32 (but I recommend using ibsMat for all ordination work)
+
+FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
+
+TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doBcf 1 -doPost 1 -doGlf 2"
+
+# Starting angsd with -P the number of parallel processes. Funny but in many cases angsd runs faster on -P 1
+
+srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoClones
+
+# how many SNPs?
+NSITES=`zcat fkMcavNoClones.mafs.gz | wc -l`
+echo $NSITES
+
+# NgsAdmix for K from 2 to 11 : do not run if the dataset contains clones or genotyping replicates!
+for K in `seq 2 11` ;
+do
+NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${K};
+done
+
+
+## Next, take the likelihood value from each run of NGSadmix and put them into a file that can be used with Clumpak to calculate the most likely K using the methods of Evanno et al. (2005).
+>ngsAdmix
+for R in {1..10}; do
+for K in {1..11}; do
+echo "NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${K}_run$R" >> ngsAdmix;
+done;
+done
+
+launcher_creator.py -j ngsAdmix -n ngsAdmix -q shortq7 -N 3 -t 06:00:00
+
+sbatch ngsAdmix
+
+> logfile
+for log in *.log; do
+grep -Po 'like=\K[^ ]+' $log >> logfile;
+done
+
+#format for CLUMPAK in R
+R
+# you are now using R in the terminal
+logs <- as.data.frame(read.table("logfile"))
+
+logs$K <- c(rep("10", 10), rep("11", 10), rep("1", 10), rep("2", 10), rep("3", 10), rep("4", 10), rep("5", 10), rep("6", 10), rep("7", 10), rep("8", 10), rep("9", 10))
+
+write.table(logs[, c(2, 1)], "logfile_formatted", row.names = F, col.names = F, quote = F)      
+quit()
+################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 mkdir samsConcat
 srun cp ./highQualityConcat/*.trim ./samsConcat
 
 # Mapping reads to a reference genome with soft-clipping (Bowtie2 --local option) to avoid indels near read ends
-GGENOME_FASTA=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/mcav_syms_updated.fasta
+GENOME_FASTA=/home/asturm2017/2bRAD/floridaKeys/referenceGenome/mcav_syms_updated.fasta
 2bRAD_bowtie2_launch.pl '\.trim$' $GENOME_FASTA > maps
 launcher_creator.py -j maps -n maps -t 2:00:00 -e asturm2017@fau.edu -q shortq7
 sbatch maps.slurm
@@ -548,3 +805,4 @@ realSFS saf2theta pop6.saf.idx -sfs pop6.sfs -outname pop6
 thetaStat do_stat pop6.thetas.idx
 realSFS saf2theta pop7.saf.idx -sfs pop7.sfs -outname pop7
 thetaStat do_stat pop7.thetas.idx
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
