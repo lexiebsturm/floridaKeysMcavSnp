@@ -40,69 +40,112 @@ setwd('../revisedData')
 For the following analyses we will require the use of multiple different R packages, we can use the package *pacman* to quickly load them.
 ```{r, load packages, include = TRUE, message = FALSE, warning = FALSE, results = 'hide'}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr", "rgdal", "broom", "rgeos", "ggmap", "moments", "car", "multcompView", "lsmeans", "ggsn", "sf","ggspatial")
+pacman::p_load("adegenet", "cowplot", "dendextend", "flextable", "gdata", "ggdendro", "hierfstat", "Imap", "kableExtra", "paletteer", "patchwork", "officer", "poppr", "RColorBrewer", "reshape2", "StAMPP", "tidyverse", "vcfR", "vegan", "WGCNA", "boa", "plyr", "rgdal", "broom", "rgeos", "ggmap", "moments", "car", "multcompView", "lsmeans", "ggsn", "sf","ggspatial")
 ```
 
 # Figures and analyses
 ##Sampling Map
 
 ```{r, sampling map} 
- # set factors to false 
- #options(stringsAsFactors = FALSE) 
  
- fknms <- readOGR("/Users/student/Documents/GitHub/floridaKeysMcavSnp/revisedData/fknms_py2/fknms_py.shp") 
- fknmsshpfile <- spTransform(fknms, "+init=epsg:4326") #WGS84 
- fknmsdta <- tidy(fknmsshpfile, group=group) 
+fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA") %>% droplevels()
  
- #bathy<- readOGR("/Users/student/Documents/Florida\ Keys/Maps/tl_2016_12_cousub/tl_2016_12_cousub.shp") 
- #bathyshpfile <- spTransform(bathy, "+init=epsg:4326") #WGS84 
- #bathydta <- tidy(bathyshpfile, group=group) 
- 
- fkSites = read.csv("sample-sites.csv", header=TRUE) 
- levels(fkSites$General.Site) 
- fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys")) 
- 
- baseMap <- get_stamenmap(bbox = c(left = -83, 
-                                 bottom = 24, 
-                                 right = -80, 
-                                 top = 26), 
-                        maptype = "terrain-background", 
-                        crop = FALSE, 
-                        zoom = 10) 
- 
- # plot map 
- #levels(fkSites$General.Site) 
- #fkSites$General.Site = factor(fkSites$General.Site, levels(fkSites$General.Site)[c(2,3,1,4)]) 
+ fkSites = read.csv("sample-sites.csv", header=TRUE)
+ levels(fkSites$General.Site)
+ fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys"))
+
+ baseMap <- get_stamenmap(bbox = c(left = -83,
+                                 bottom = 24,
+                                 right = -80,
+                                 top = 26),
+                        maptype = "terrain-background",
+                        crop = FALSE,
+                        zoom = 10)
  
  fkMap=ggmap(baseMap)+ 
-   geom_polygon(aes(x=long, y=lat, group=group), 
-                data=fknmsdta, 
-                color="dark red", alpha=.2, size=.2) + 
-   geom_point(data = fkSites, size= 4, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
-   #scale_fill_manual(values = brewer.pal(name = "Set3", n = 4), name = "Population") + 
+  geom_polypath(data = fknmsshpfile, aes(x = long, y = lat, group = location), color="dark red", alpha=.2, size=.2) +
+   geom_point(data = fkSites, size = 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
    scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DRTS", "DRTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
    scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+ 
-   scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+ 
+   scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+
    guides(fill = guide_legend(override.aes = list(shape = 22, size= 4)))+ 
    guides(shape = guide_legend(override.aes = list(size= 4)))+ 
-   #labs(x="Longitude", y="Latitutde")+ 
-   theme_bw()+ 
+   theme_bw() +
    theme(legend.position = "right", 
          axis.title.x = element_blank(), 
-         axis.title.y = element_blank())+ 
-   ggsn::scalebar(x.min = -83, 
-                  y.min = 24, 
-                  x.max = -80, 
-                  y.max = 26, 
-                  dist = 50, transform = TRUE, 
-                  model = "WGS84", 
-                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+         axis.title.y = element_blank(),
+         plot.background = element_blank())
+ 
+ mainMap = fkMap +
+      geom_rect(aes(xmin = -83.25, xmax = -82.95, ymin = 24.45, ymax = 24.75), color = "black", fill = NA, size = 0.4) +
+      geom_rect(aes(xmin = -80.35, xmax = -80.15, ymin = 25.1, ymax = 25.3), color = "black", fill = NA, size = 0.4) +
+      geom_rect(aes(xmin = -81.7, xmax = -81.5, ymin = 24.45, ymax = 24.65), color = "black", fill = NA, size = 0.4) +
+   ggsn::scalebar(x.min = -83,
+                  y.min = 24,
+                  x.max = -80,
+                  y.max = 26,
+                  dist = 50, transform = TRUE,
+                  model = "WGS84",
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3) +
                 annotation_north_arrow(location= "topright", height = unit(1, "cm"),
                 width = unit(0.75, "cm"), style = north_arrow_orienteering)
  
- fkMap
+ upperKeys = fkMap +
+  coord_sf(xlim = c(-80.35, -80.15), ylim = c(25.1, 25.3)) +
+  scale_x_continuous(breaks = c(seq(-80.4, -80.0, by = .1))) +
+  scale_y_continuous(breaks = c(seq(25.0, 25.3, by = .1))) +
+   ggsn::scalebar(x.min = -80.35,
+                  y.min = 25.105,
+                  x.max = -80.16,
+                  y.max = 25.3,
+                  dist = 5, transform = TRUE,
+                  model = "WGS84",
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+   theme(legend.position = "none",
+         axis.title = element_blank(),
+         axis.text = element_blank(),
+         axis.ticks = element_blank())
  
-ggsave("../revisedFigures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
+lowerKeys = fkMap +
+  coord_sf(xlim = c(-81.7, -81.5), ylim = c(24.45, 24.65)) +
+  scale_x_continuous(breaks = c(seq(-81.7, -81.3, by = .1))) +
+  scale_y_continuous(breaks = c(seq(24.4, 24.7, by = .1))) +
+  ggsn::scalebar(x.min = -81.7,
+                  y.min = 24.455,
+                  x.max = -81.51,
+                  y.max = 24.65,
+                  dist = 5, transform = TRUE,
+                  model = "WGS84",
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+   theme(legend.position = "none",
+         axis.title = element_blank(),
+         axis.text = element_blank(),
+         axis.ticks = element_blank())
+
+dryTortugas = fkMap +
+  coord_sf(xlim = c(-83.25, -82.95), ylim = c(24.45, 24.75)) +
+  scale_x_continuous(breaks = c(seq(-83.2, -82.9, by = .1))) +
+  scale_y_continuous(breaks = c(seq(24.4, 24.7, by = .1))) +  
+  ggsn::scalebar(x.min = -83.25,
+                  y.min = 24.455,
+                  x.max = -82.96,
+                  y.max = 24.75,
+                  dist = 5, transform = TRUE,
+                  model = "WGS84",
+                 dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3)+
+   theme(legend.position = "none",
+         axis.title = element_blank(),
+         axis.text = element_blank(),
+         axis.ticks = element_blank())
+  
+fknmsMap = ggdraw() +
+  draw_plot(mainMap) +
+  draw_plot(upperKeys, x = .62, y = 0.125, width = 0.3, height = 0.3) +
+  draw_plot(lowerKeys, x = 0.25, y = 0.45, width = 0.3, height = 0.3) +
+  draw_plot(dryTortugas, x = 0.01, y = 0.6, width = 0.3, height = 0.3)
+   
+ 
+ggsave("../revisedFigures/fig1.tiff", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300) 
 ggsave("../revisedFigures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
 
