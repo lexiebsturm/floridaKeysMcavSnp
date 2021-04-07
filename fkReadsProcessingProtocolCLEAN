@@ -322,7 +322,6 @@ echo $NSITES
 #scp the ibs matrix to identify clones
 
 ################################################################################
-
 mkdir mcavBamsNoClones
 srun cp ./mcavBams/*.bam* ./mcavBamsNoClone
 

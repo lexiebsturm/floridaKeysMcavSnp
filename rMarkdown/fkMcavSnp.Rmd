@@ -100,6 +100,8 @@ pacman::p_load("adegenet", "dendextend", "flextable", "gdata", "ggdendro", "hier
                 annotation_north_arrow(location= "topright", height = unit(1, "cm"),
                 width = unit(0.75, "cm"), style = north_arrow_orienteering)
  
+ fkMap
+ 
 ggsave("../revisedFigures/fkMap.tiff", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300) 
 ggsave("../revisedFigures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
@@ -274,7 +276,7 @@ snpPCoA$depth=as.factor(snpPCoA$depth)
 snpPCoA$depth = factor(snpPCoA$depth, levels(snpPCoA$depth)[c(2,1)])
 
 # SNP PCoA biplot
-fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop, shape = depth, linetype = depth)) +
+fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop, shape = depth, linetype = depth))+
   geom_hline(yintercept = 0, color = "gray90", size = 0.5) +
   geom_vline(xintercept = 0, color = "gray90", size = 0.5) +
   stat_ellipse(data = subset(snpPCoA, type = "t", geom = "polygon", alpha = 0.1)) + #ellipse
@@ -309,8 +311,8 @@ fkSnpPcoaPlot = fkSnpPcoaPlotA +
 
 fkSnpPcoaPlot
 
-ggsave("../figures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
-ggsave("../figures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300, device=cairo_ps, fallback_resolution = 600)
+ggsave("../revisedFigures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
+ggsave("../revisedFigures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300, device=cairo_ps, fallback_resolution = 600)
 
 ```
 
