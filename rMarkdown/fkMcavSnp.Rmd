@@ -46,10 +46,10 @@ pacman::p_load("adegenet", "cowplot", "dendextend", "flextable", "gdata", "ggden
 # Figures and analyses
 ##Sampling Map
 
-```{r, sampling map} 
- 
+```{r, sampling map}
+
 fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA") %>% droplevels()
- 
+
  fkSites = read.csv("sample-sites.csv", header=TRUE)
  levels(fkSites$General.Site)
  fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys"))
@@ -61,21 +61,21 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
                         maptype = "terrain-background",
                         crop = FALSE,
                         zoom = 10)
- 
- fkMap=ggmap(baseMap)+ 
+
+ fkMap=ggmap(baseMap)+
   geom_polypath(data = fknmsshpfile, aes(x = long, y = lat, group = location), color="dark red", alpha=.2, size=.2) +
-   geom_point(data = fkSites, size = 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
-   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DTS", "DTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
-   scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+ 
+   geom_point(data = fkSites, size = 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) +
+   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DTS", "DTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales
+   scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+
    scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+
-   guides(fill = guide_legend(override.aes = list(shape = 22, size= 4)))+ 
-   guides(shape = guide_legend(override.aes = list(size= 4)))+ 
+   guides(fill = guide_legend(override.aes = list(shape = 22, size= 4)))+
+   guides(shape = guide_legend(override.aes = list(size= 4)))+
    theme_bw() +
-   theme(legend.position = "right", 
-         axis.title.x = element_blank(), 
+   theme(legend.position = "right",
+         axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          plot.background = element_blank())
- 
+
  mainMap = fkMap +
       geom_rect(aes(xmin = -83.25, xmax = -82.95, ymin = 24.45, ymax = 24.75), color = "black", fill = NA, size = 0.4) +
       geom_rect(aes(xmin = -80.35, xmax = -80.15, ymin = 25.1, ymax = 25.3), color = "black", fill = NA, size = 0.4) +
@@ -89,7 +89,7 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
                  dist_unit="km", st.bottom=TRUE, st.dist=.03, st.size=3) +
                 annotation_north_arrow(location= "topright", height = unit(1, "cm"),
                 width = unit(0.75, "cm"), style = north_arrow_orienteering)
- 
+
  upperKeys = fkMap +
   coord_sf(xlim = c(-80.35, -80.15), ylim = c(25.1, 25.3)) +
   scale_x_continuous(breaks = c(seq(-80.4, -80.0, by = .1))) +
@@ -105,7 +105,7 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
          axis.title = element_blank(),
          axis.text = element_blank(),
          axis.ticks = element_blank())
- 
+
 lowerKeys = fkMap +
   coord_sf(xlim = c(-81.7, -81.5), ylim = c(24.45, 24.65)) +
   scale_x_continuous(breaks = c(seq(-81.7, -81.3, by = .1))) +
@@ -137,15 +137,15 @@ dryTortugas = fkMap +
          axis.title = element_blank(),
          axis.text = element_blank(),
          axis.ticks = element_blank())
-  
+
 fknmsMap = ggdraw() +
   draw_plot(mainMap) +
   draw_plot(upperKeys, x = .62, y = 0.125, width = 0.3, height = 0.3) +
   draw_plot(lowerKeys, x = 0.25, y = 0.45, width = 0.3, height = 0.3) +
   draw_plot(dryTortugas, x = 0.01, y = 0.6, width = 0.3, height = 0.3)
-   
- 
-ggsave("../revisedFigures/fig1.tiff", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300) 
+
+
+ggsave("../revisedFigures/fig1.tiff", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300)
 ggsave("../revisedFigures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
 
@@ -273,7 +273,7 @@ ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, uni
 #                se   = sd / sqrt(N))
 # max(heteroStatAllSites$mean, na.rm = TRUE)
 # min(heteroStatAllSites$mean, na.rm = TRUE)
-# 
+#
 # heteroVariantSites <- ddply(hetero, c("popdepth"), summarise,
 #                N    = length(HeterozygosityVariantSites),
 #                mean = mean(HeterozygosityVariantSites),
@@ -281,12 +281,12 @@ ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, uni
 #                se   = sd / sqrt(N))
 # max(heteroVariantSites$mean, na.rm = TRUE)
 # min(heteroVariantSites$mean, na.rm = TRUE)
-# 
-# heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) + 
+#
+# heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) +
 #   geom_boxplot()+
 #   theme_bw()
 # heteroPlot
-# 
+#
 # my_data <- read.table(file.choose())
 # mean(my_data$V4)
 ```
@@ -383,15 +383,15 @@ fk.fst <- stamppFst(fkGenlightPopDepth, nboots = 99, percent = 95, nclusters = 4
 fk.fst$Fsts
 fk.fst$Pvalues
 
-# pca.1 <- glPca(fkGenlightPopDepth, nf=300, n.cores=1) 
-# 
+# pca.1 <- glPca(fkGenlightPopDepth, nf=300, n.cores=1)
+#
 # # proportion of explained variance by first three axes
 # pca.1$eig[1]/sum(pca.1$eig) # proportion of variation explained by 1st axis
-# pca.1$eig[2]/sum(pca.1$eig) # proportion of variation explained by 2nd axis 
+# pca.1$eig[2]/sum(pca.1$eig) # proportion of variation explained by 2nd axis
 # pca.1$eig[3]/sum(pca.1$eig) # proportion of variation explained by 3rd axis
-# 
+#
 # #####K-Means Clustering and DAPC
-# grp <- find.clusters(fkGenlightPopDepth, max.n.clust=11, glPca = pca.1, perc.pca = 100, n.iter=1e6, n.start=1000) 
+# grp <- find.clusters(fkGenlightPopDepth, max.n.clust=11, glPca = pca.1, perc.pca = 100, n.iter=1e6, n.start=1000)
 
 
 pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
@@ -599,42 +599,90 @@ ggsave("../figures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, uni
 # skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
 # zooxHostProportions$zooxReadRatio <- log10(zooxHostProportions$zooxReadRatio)
 # skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
-# 
+#
 # zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=zooxReadRatio)) +
 #   geom_point()+
 #   geom_smooth(method = "lm")
-# 
+#
 # zooxDepthPlot
-# 
+#
 # leveneTest(zooxReadRatio ~ site*depthZone, data = zooxHostProportions)
 # res.aov3 <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
 # shapiro.test(zooxHostProportions$zooxReadRatio)
 # residualplot=plot(res.aov3, 2)
 # zooxAnova <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
 # Anova(zooxAnova, type = "III")
-# 
-# 
+#
+#
 # lsmeans = lsmeans::lsmeans ### Uses the lsmeans function
 #                            ###  from the lsmeans package,
 #                            ###  not from the lmerTest package
-# 
+#
 # leastsquare = lsmeans(zooxAnova,
 #                       pairwise ~ site:depthZone,
 #                       adjust="tukey")
-# 
-# 
+#
+#
 # zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=zooxReadRatio, fill=depthZone)) +
 #   geom_boxplot()
-# 
+#
 # zooxBoxPlot
-# 
+#
 
 #Zoox Plot
 
-dfZoox = read.csv("zooxGenomeAlignments.csv")
-dfZoox$popsite=as.factor(dfZoox$popsite)
-dfZoox$popsite = factor(dfZoox$popsite, levels = levels(dfZoox$popsite)[c(6,5,4,3,2,1,8,7)])
-levels(dfZoox$popsite) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+# dfZoox = read.csv("zooxCommunity.csv")
+
+
+zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
+head(zoox)
+
+zoox$V2[is.na(zoox$V2)] <- as.character(zoox$V1[is.na(zoox$V2)])
+
+zoox$V1 = gsub(pattern = "fk.*", "chr", zoox$V1)
+zoox$V2 = gsub(".trim.*", "", zoox$V2)    
+
+zoox = zoox %>% filter(zoox$V1 != "*")
+
+zooxLst = split(zoox$V2, as.integer(gl(length(zoox$V2), 20, length(zoox$V2))))
+
+zooxMaps = NULL
+for(i in zooxLst){
+  zooxMaps = rbind(zooxMaps, data.frame(t(i)))
+}
+colnames(zooxMaps) = c("sample",zoox$V1[c(2:20)])
+
+for(i in c(2:20)){
+  zooxMaps[,i] = as.numeric(levels(zooxMaps[,i]))[zooxMaps[,i]]
+}
+
+str(zooxMaps)
+
+zooxMaps$Symbiodinium = rowSums(zooxMaps[2:6])
+zooxMaps$Breviolum = rowSums(zooxMaps[7:10])
+zooxMaps$Cladcopium = rowSums(zooxMaps[11:16])
+zooxMaps$Durusdinium = rowSums(zooxMaps[17:20])
+
+zooxMaps = zooxMaps[,c(1, 21:24)]
+zooxProp = zooxMaps
+
+zooxProp$sum = apply(zooxProp[, c(2:length(zooxProp[1,]))], 1, function(x) {
+sum(x, na.rm = T)
+})
+
+zooxProp = cbind(zooxProp[, c(1)], (zooxProp[, c(2:(ncol(zooxProp)-1))]
+/ zooxProp$sum))
+head(zooxProp)
+
+apply(zooxProp[, c(2:(ncol(zooxProp)))], 1, function(x) {
+sum(x, na.rm = T)
+})
+
+dfZoox = cbind("Sample" = zooxProp[,1], "Population" = popData[,2], zooxProp[,c(2:5)])
+
+dfZoox$Population=as.factor(dfZoox$Population)
+dfZoox$Population = factor(dfZoox$Population, levels = levels(dfZoox$Population)[c(6,5,4,3,2,1,8,7)])
+levels(dfZoox$Population) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 dfZoox = dfZoox[order(dfZoox$popsite),]
 dfZoox$Order = c(1:nrow(dfZoox))
@@ -689,7 +737,7 @@ ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 
 # }
 #   # If triangle.to.replace="lower", replaces the lower triangle of a square matrix with its upper triangle.
 #   # If triangle.to.replace="upper", replaces the upper triangle of a square matrix with its lower triangle.
-# 
+#
 # GeoDistanceInMetresMatrix = function(df.geopoints) {
 #   # Returns a matrix (M) of distances between geographic points. M[i,j] = M[j,i] = Distance between (df.geopoints$lat[i], df.geopoints$lon[i]) and (df.geopoints$lat[j], df.geopoints$lon[j]). The row and column names are given by df.geopoints$name.
 #   
@@ -723,24 +771,24 @@ ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 
 #   rownames(mat.distances) = df.geopoints$name
 #   colnames(mat.distances) = df.geopoints$name
 #   return(mat.distances)}
-# 
+#
 # snpNeiDist = as.dist(stamppNeisD(fkGenlightPopDepth, pop = TRUE), diag = F)
 # coords = read.csv("fkXYcoords.csv", header=TRUE) # tab-separated file for all pops
 # dGeo = as.dist(GeoDistanceInMetresMatrix(coords)/1000, diag = T)
-# 
+#
 # # Test IBD
 # set.seed(694)
 # snpIBD = mantel.randtest(dGeo,snpNeiDist)
 # snpIBD
 # snpNei =  melt(as.matrix(snpNeiDist), varnames = c("row", "col"), value.name = "nei")
 # snpNei = snpNei[snpNei$row != snpNei$col,]
-# 
+#
 # geo = melt(as.matrix(dGeo), varnames = c("row", "col"), value.name = "geo")
 # geo = geo[geo$row != geo$col,]
-# 
+#
 # snpMantelDF = data.frame(cbind(snpNei$nei, geo$geo))
 # colnames(snpMantelDF) = c("nei", "geo")
-# 
+#
 # snpMantelA = ggplot(data = snpMantelDF, aes(x = geo, y = nei)) +
 #   scale_fill_gradientn(colors = paletteer_d("wesanderson::Zissou1")) +
 #   stat_density_2d(aes(fill = stat(density)), n = 300, contour = FALSE, geom = "raster") +
@@ -748,13 +796,13 @@ ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 
 #   geom_point(shape = 21, fill = "gray40") +
 #   scale_x_continuous(limits = c(0,1000), expand = c(0,0)) +
 #   scale_y_continuous(limits = c(0,0.15), breaks = seq(0,0.15, by = 0.05), expand = c(0,0)) +
-#   annotate("label", x = 775, y = 0.14325, 
-#            label = paste("r = ", round(snpIBD$obs, 3), "; p = ", snpIBD$pvalue), 
+#   annotate("label", x = 775, y = 0.14325,
+#            label = paste("r = ", round(snpIBD$obs, 3), "; p = ", snpIBD$pvalue),
 #            size = 4, alpha = 0.6) +             
 #   labs(x = "Geographic distance (km)", y = expression(paste("Nei's genetic distance (",italic("D"),")"))) +
 #   ggtitle("SNP") +
 #   theme_bw()
-# 
+#
 # snpMantel = snpMantelA + theme(
 #   axis.title.x = element_blank(),
 #   axis.text.x = element_text(size = 12, color = "black"),
@@ -767,7 +815,7 @@ ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 
 #   panel.border = element_rect(size = 1.2, color = "black"),
 #   plot.margin = margin(0.2,0.5,0.1,0.1, unit = "cm"),
 #   legend.position = "none")
-# 
+#
 # snpMantel
 ```
 
@@ -782,19 +830,19 @@ outs=which(dat[,"qval"]<0.1)
 plot_bayescan("fkMcav.baye_fst.txt",FDR=0.1,add_text=F,size=0.5,highlight=outs)
 
 outliers= dat %>% filter(qval < 0.1)
-outsQval=select(outliers, qval, locus) 
+outsQval=select(outliers, qval, locus)
 
 
 #Minor Allele Frequencies of Outliers Across Populations
 # outAlleleFreq=read.csv("outlierAlleleFreqs.csv")
-# outAlleleFreqPlot <- ggplot(outAlleleFreq, aes(x=PopDepth, y=MIF)) + 
+# outAlleleFreqPlot <- ggplot(outAlleleFreq, aes(x=PopDepth, y=MIF)) +
 #   geom_boxplot()+
 #   theme_bw()
 # outAlleleFreqPlot
-# 
+#
 # outAlleleFreq.lm = lm(MIF ~ AvgDepth, data=outAlleleFreq)
-# summary(outAlleleFreq.lm)$r.squared 
-# 
+# summary(outAlleleFreq.lm)$r.squared
+#
 # ggplot(outAlleleFreq, aes(x=AvgDepth, y=MIF)) + geom_point()+ geom_smooth(method=lm)
 
 ## SNPs potentially under selection
@@ -819,11 +867,11 @@ head(genes)
 snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
 snpLoci$locus = c(1:nrow(snpLoci))
 
-outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
+outsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>%
   filter(locus %in% outs) %>%
   #filter(locus %in% outsQval) %>%
   full_join(., outsQval, by = "locus") %>%
-  full_join(., genes, by = "chromo") %>% 
+  full_join(., genes, by = "chromo") %>%
   filter(position>start, position<end)
 
 outsByGene = outsByGene[c(1:3,5:9,4)]
@@ -885,9 +933,9 @@ head(genes)
 snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
 snpLoci$locus = c(1:nrow(snpLoci))
 
-highOutsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>% 
+highOutsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>%
   filter(locus %in% highOuts) %>%
-  full_join(., genes, by = "chromo") %>% 
+  full_join(., genes, by = "chromo") %>%
   filter(position>start, position<end)
 
 highOutsByGene
