@@ -358,6 +358,16 @@ NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${K};
 done
 
 
+
+srun ~/bin/evalAdmix/evalAdmix -beagle fkMcavNoClones.beagle.gz -fname fkMcavNoClones_k2.fopt.gz -qname fkMcavNoClones_k2.qopt -o fkMcavNoClones_k2_residuals
+
+#Run evalAdmix
+for K in `seq 2 11` ;
+do
+srun ~/bin/evalAdmix/evalAdmix -beagle fkMcavNoClones.beagle.gz -fname fkMcavNoClones_k${K}.fopt.gz -qname fkMcavNoClones_k${K}.qopt -o fkMcavNoClones_k${K}_residuals -P 20
+done
+
+
 ## Next, take the likelihood value from each run of NGSadmix and put them into a file that can be used with Clumpak to calculate the most likely K using the methods of Evanno et al. (2005).
 >ngsAdmix
 for R in {1..10}; do
@@ -623,7 +633,6 @@ write.table(logs[, c(2, 1)], "logfile_formatted", row.names = F, col.names = F, 
 quit()
 
 # alternatively, to use real ADMIXTURE on called SNPs (requires plink and ADMIXTURE):
-gunzip fkMcavNoClones.vcf.gz
 cat fkMcavNoClones.vcf | sed 's/xpSc//g' >fkMcavNoClones_chr.vcf
 cat fkMcavNoClones_chr.vcf | sed 's/xfSc//g' >fkMcavNoClones_chr1.vcf
 cat fkMcavNoClones_chr1.vcf | sed 's/Sc//g' >fkMcavNoClones_chr2.vcf
@@ -632,6 +641,13 @@ for K in `seq 1 11`; \
 do admixture --cv fkMcavNoClones.bed $K | tee fkMcavNoClones_${K}.out; done
 
 grep -h CV fkMcavNoClones*.out
+
+plink --vcf fkMcavNoClones.bcf --make-bed --allow-extra-chr --out fkMcavNoClones
+for K in `seq 1 11`; \
+do admixture --cv fkMcavNoClones.bed $K | tee fkMcavNoClones_${K}.out; done
+
+grep -h CV fkMcavNoClones*.out
+
 
 ####
 CV error (K=1): 0.48446

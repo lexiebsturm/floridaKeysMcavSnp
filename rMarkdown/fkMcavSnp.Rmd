@@ -65,7 +65,7 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
  fkMap=ggmap(baseMap)+ 
   geom_polypath(data = fknmsshpfile, aes(x = long, y = lat, group = location), color="dark red", alpha=.2, size=.2) +
    geom_point(data = fkSites, size = 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) + 
-   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DRTS", "DRTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
+   scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DTS", "DTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales 
    scale_y_continuous(label=function(x){return(paste(x,"°N"))}, expand = c(0, 0))+ 
    scale_x_continuous(label=function(x){return(paste(-x,"°W"))}, expand = c(0, 0))+
    guides(fill = guide_legend(override.aes = list(shape = 22, size= 4)))+ 
@@ -193,7 +193,7 @@ cloneDendA = ggplot() +
   geom_segment(data = segment(cloneDData), aes(x = x, y = y, xend = xend, yend = yend2), size = 0.5) +
   geom_point(data = cloneDendPoints, aes(x = x, y = y, fill = pop, shape = depth), size = 4, stroke = 0.25) +
   #scale_fill_brewer(palette = "Dark2", name = "Population") +
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DTS", "DTN", "LK", "UK"))+
   scale_shape_manual(values=c(21, 25), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
   #geom_hline(yintercept = 0.1, color = "red", lty = 5, size = 0.75) + # creating a dashed line to indicate a clonal distance threshold
   geom_text(data = subset(cloneDendPoints, subset = label %in% techReps), aes(x = x, y = (y - .015), label = label), angle = 90, size=5.5) + # spacing technical replicates further from leaf
@@ -249,7 +249,7 @@ snpDendA = ggplot() +
   geom_segment(data = segment(snpDData), aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_point(data = snpDendPoints, aes(x = x, y = y, fill = site, shape = depth), size = 5) +
   scale_shape_manual(values=c(24, 25), breaks=c("Shallow","Mesophotic"), name="Depth Zone")+
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DTS", "DTN", "LK", "UK"))+
   guides(fill = guide_legend(override.aes = list(shape = 21)))+
   theme_dendro()
 
@@ -327,7 +327,7 @@ fkSnpPcoaPlotA = ggplot(snpPCoA, aes(x = PCo1, y = PCo2, color = pop, fill = pop
   geom_point(aes(x = PCo1, y = PCo2, shape = depth), size = 3, alpha = 0.3, show.legend = FALSE, guide=FALSE) + #individual's points indicated by circles
   scale_shape_manual(values = c(21,25), breaks=c("Shallow","Mesophotic"), name = "Depth Zone") +
   geom_point(aes(x = mean.x, y = mean.y, shape = depth), size = 5, color = "black") + #population centroids indicated by triangles
-  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DRTS", "DRTN", "LK", "UK"))+
+  scale_fill_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name= "Population", labels = c("DTS", "DTN", "LK", "UK"))+
   scale_color_paletteer_d("LaCroixColoR::PassionFruit", breaks=c("TER-South","TER-North","Lower Keys", "Upper Keys"), name = " Population", guide=FALSE) +
   xlab(paste ("PCo 1 (", fkSnpPcoaVar[1],"%)", sep = "")) + #Prints percent variation explained by first axis
   ylab(paste ("PCo 2 (", fkSnpPcoaVar[2],"%)", sep = "")) + #Prints percent variation explained by second axis
@@ -361,7 +361,7 @@ ggsave("../revisedFigures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7
 
 ## AMOVA and Pairwise Fst
 ```{r, AMOVA and Pairwise Fst, fig.width = 13.4, fig.height = 5.9}
-fkVcf = read.vcfR("fkMcavNoClonesRenamed.vcf.gz")
+fkVcf = read.vcfR("fkMcavNoClones.bcf")
 fkGenlightPopDepth = vcfR2genlight(fkVcf, n.cores = 2) # Converts the vcf file into a file format that poppr uses the "genlight" format
 locNames(fkGenlightPopDepth) = paste(fkVcf@fix[,1],fkVcf@fix[,2],sep="_")
 popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
@@ -383,15 +383,15 @@ fk.fst <- stamppFst(fkGenlightPopDepth, nboots = 99, percent = 95, nclusters = 4
 fk.fst$Fsts
 fk.fst$Pvalues
 
-pca.1 <- glPca(fkGenlightPopDepth, nf=300, n.cores=1) 
-
-# proportion of explained variance by first three axes
-pca.1$eig[1]/sum(pca.1$eig) # proportion of variation explained by 1st axis
-pca.1$eig[2]/sum(pca.1$eig) # proportion of variation explained by 2nd axis 
-pca.1$eig[3]/sum(pca.1$eig) # proportion of variation explained by 3rd axis
-
-#####K-Means Clustering and DAPC
-grp <- find.clusters(fkGenlightPopDepth, max.n.clust=11, glPca = pca.1, perc.pca = 100, n.iter=1e6, n.start=1000) 
+# pca.1 <- glPca(fkGenlightPopDepth, nf=300, n.cores=1) 
+# 
+# # proportion of explained variance by first three axes
+# pca.1$eig[1]/sum(pca.1$eig) # proportion of variation explained by 1st axis
+# pca.1$eig[2]/sum(pca.1$eig) # proportion of variation explained by 2nd axis 
+# pca.1$eig[3]/sum(pca.1$eig) # proportion of variation explained by 3rd axis
+# 
+# #####K-Means Clustering and DAPC
+# grp <- find.clusters(fkGenlightPopDepth, max.n.clust=11, glPca = pca.1, perc.pca = 100, n.iter=1e6, n.start=1000) 
 
 
 pop.order <- c("TER-South-Shallow", "TER-South-Mesophotic",  "TER-North-Shallow", "TER-North-Mesophotic", "Lower Keys-Shallow", "Lower Keys-Mesophotic", "Upper Keys-Shallow", "Upper Keys-Mesophotic")
@@ -430,10 +430,10 @@ snpHeatmapA = ggplot(data = snpFst, aes(Pop, Pop2, fill = Fst))+
   geom_tile(color = "white")+
   scale_fill_gradient2(low = "white", high = "red", midpoint = 0, limit = c(0, 0.1),
                        space = "Lab", name = expression(paste(italic("F")[ST])))+
-  geom_text(data = snpFst, aes(Pop, Pop2, label = Fst), color = ifelse(snpQ$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQ$Qval < 0.05, 6, 5)) +
+  geom_text(data = snpFst, aes(Pop, Pop2, label = Fst), color = ifelse(snpQ$Qval <= 0.05,"black", "darkgrey"), size = ifelse(snpQ$Qval < 0.05, 6, 5), fontface = ifelse(snpQ$Qval <= 0.05, "bold", "plain")) +
   guides(fill=guide_colorbar(barwidth = 1, barheight = 12, title.position = "top", title.hjust = 0.5))+                     
-  scale_y_discrete(position = "right", labels=c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow","DRTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow"))+
-  scale_x_discrete(labels = str_wrap(c("DRTS-Mesophotic", "DRTN-Shallow","DRTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic"), width = 6)) +
+  scale_y_discrete(position = "right", labels=c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow","DTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow"))+
+  scale_x_discrete(labels = str_wrap(c("DTS-Mesophotic", "DTN-Shallow","DTN-Mesophotic","LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic"), width = 6)) +
   #ggtitle("   SNP") +
   theme_minimal()
 
@@ -455,9 +455,9 @@ snpHeatmap = snpHeatmapA + theme(
 
 snpHeatmap
 
-ggsave("../figures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
+ggsave("../revisedFigures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
 
-ggsave("../figures/fig3.eps", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
+ggsave("../revisedFigures/fig3.eps", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
 ```
 ## ADMIXTURE Plot
 ```{r, ADMIXTURE}
@@ -595,51 +595,51 @@ ggsave("../figures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, uni
 ## Zoox and Depth
 ```{r, zooxDepth, eval = F}
 
-zooxHostProportions=read.csv("zooxMcavRatio.csv", header=TRUE)
-skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
-zooxHostProportions$zooxReadRatio <- log10(zooxHostProportions$zooxReadRatio)
-skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
-
-zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=zooxReadRatio)) +
-  geom_point()+
-  geom_smooth(method = "lm")
-
-zooxDepthPlot
-
-leveneTest(zooxReadRatio ~ site*depthZone, data = zooxHostProportions)
-res.aov3 <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
-shapiro.test(zooxHostProportions$zooxReadRatio)
-residualplot=plot(res.aov3, 2)
-zooxAnova <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
-Anova(zooxAnova, type = "III")
-
-
-lsmeans = lsmeans::lsmeans ### Uses the lsmeans function
-                           ###  from the lsmeans package,
-                           ###  not from the lmerTest package
-
-leastsquare = lsmeans(zooxAnova,
-                      pairwise ~ site:depthZone,
-                      adjust="tukey")
-
-
-zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=zooxReadRatio, fill=depthZone)) +
-  geom_boxplot()
-
-zooxBoxPlot
-
+# zooxHostProportions=read.csv("zooxMcavRatio.csv", header=TRUE)
+# skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
+# zooxHostProportions$zooxReadRatio <- log10(zooxHostProportions$zooxReadRatio)
+# skewness(zooxHostProportions$zooxReadRatio, na.rm = TRUE)
+# 
+# zooxDepthPlot=ggplot(zooxHostProportions, aes(x=depth, y=zooxReadRatio)) +
+#   geom_point()+
+#   geom_smooth(method = "lm")
+# 
+# zooxDepthPlot
+# 
+# leveneTest(zooxReadRatio ~ site*depthZone, data = zooxHostProportions)
+# res.aov3 <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
+# shapiro.test(zooxHostProportions$zooxReadRatio)
+# residualplot=plot(res.aov3, 2)
+# zooxAnova <- aov(zooxReadRatio ~ site * depthZone, data = zooxHostProportions)
+# Anova(zooxAnova, type = "III")
+# 
+# 
+# lsmeans = lsmeans::lsmeans ### Uses the lsmeans function
+#                            ###  from the lsmeans package,
+#                            ###  not from the lmerTest package
+# 
+# leastsquare = lsmeans(zooxAnova,
+#                       pairwise ~ site:depthZone,
+#                       adjust="tukey")
+# 
+# 
+# zooxBoxPlot=ggplot(zooxHostProportions, aes(x=site, y=zooxReadRatio, fill=depthZone)) +
+#   geom_boxplot()
+# 
+# zooxBoxPlot
+# 
 
 #Zoox Plot
 
-dfZoox = read.csv("zooxCommunity.csv")
-dfZoox$Population=as.factor(dfZoox$Population)
-dfZoox$Population = factor(dfZoox$Population, levels = levels(dfZoox$Population)[c(6,5,4,3,2,1,8,7)])
-levels(dfZoox$Population) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+dfZoox = read.csv("zooxGenomeAlignments.csv")
+dfZoox$popsite=as.factor(dfZoox$popsite)
+dfZoox$popsite = factor(dfZoox$popsite, levels = levels(dfZoox$popsite)[c(6,5,4,3,2,1,8,7)])
+levels(dfZoox$popsite) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
-dfZoox = dfZoox[order(dfZoox$Population),]
+dfZoox = dfZoox[order(dfZoox$popsite),]
 dfZoox$Order = c(1:nrow(dfZoox))
 
-zDat = melt(dfZoox, id.vars = c("Sample", "Population", "Order"), variable.name = "Symbiont", value.name = "Fraction")
+zDat = melt(dfZoox, id.vars = c("sample", "popsite", "Order"), variable.name = "Symbiont", value.name = "Fraction")
 colPalZoox = brewer.pal(4, "BrBG")
 names(colPalZoox) = levels(zDat$Symbiont)
 
@@ -650,7 +650,7 @@ zooxPlotA = ggplot(data = zDat, aes(x = Order, y = Fraction, fill = Symbiont, or
   scale_y_continuous(expand = c(0, 0), labels = function(x) paste0(x*100, "%")) +
   scale_fill_manual(values = colPalZoox, name = "Symbiodiniaceae genus") +
   coord_cartesian(ylim = c(-.01,1.01)) +
-  facet_grid(.~fct_inorder(Population), drop=TRUE, scales = "free", switch = "x", space = "free") +
+  facet_grid(.~fct_inorder(popsite), drop=TRUE, scales = "free", switch = "x", space = "free") +
   theme_bw()
 
 zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
@@ -670,105 +670,105 @@ zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
   legend.text = element_text(face = "italic"))
 zooxPlot
 
-ggsave("../figures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 15, units = "cm", dpi = 300)
+ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 15, units = "cm", dpi = 300)
 ```
 
 ```{r, mantelTest}
-# Isolation by distance
-ReplaceLowerOrUpperTriangle = function(m, triangle.to.replace) {
-  if (nrow(m) != ncol(m))
-    stop("Supplied matrix must be square.")
-  if (tolower(triangle.to.replace) == "lower")
-    tri = lower.tri(m)
-  else if (tolower(triangle.to.replace) == "upper")
-    tri = upper.tri(m)
-  else
-    stop("triangle.to.replace must be set to 'lower' or 'upper'.")
-  m[tri] = t(m)[tri]
-  return(m)
-}
-  # If triangle.to.replace="lower", replaces the lower triangle of a square matrix with its upper triangle.
-  # If triangle.to.replace="upper", replaces the upper triangle of a square matrix with its lower triangle.
-
-GeoDistanceInMetresMatrix = function(df.geopoints) {
-  # Returns a matrix (M) of distances between geographic points. M[i,j] = M[j,i] = Distance between (df.geopoints$lat[i], df.geopoints$lon[i]) and (df.geopoints$lat[j], df.geopoints$lon[j]). The row and column names are given by df.geopoints$name.
-  
-  GeoDistanceInMetres = function(g1, g2) {
-    # Returns a vector of distances. (But if g1$index > g2$index, returns zero.) The 1st value in the returned vector is the distance between g1[[1]] and g2[[1]]. The 2nd value in the returned vector is the distance between g1[[2]] and g2[[2]]. Etc. Each g1[[x]] or g2[[x]] must be a list with named elements "index", "lat" and "lon". E.g. g1 = list(list("index"=1, "lat"=12.1, "lon"=10.1), list("index"=3, "lat"=12.1, "lon"=13.2))
-    
-    DistM = function(g1, g2) {
-      require("Imap")
-      return(ifelse(
-        g1$index > g2$index,
-        0,
-        gdist(lat.1 = g1$lat, lon.1 = g1$lon, lat.2 = g2$lat, lon.2 = g2$lon, units = "m")))
-    }
-    return(mapply(DistM, g1, g2))
-  }
-  
-  n.geopoints = nrow(df.geopoints)
-  
-  # The index column is used to ensure we only do calculations for the upper triangle of points
-  df.geopoints$index = 1:n.geopoints
-  
-  # Create a list of lists
-  list.geopoints = by(df.geopoints[, c("index", "lat", "lon")], 1:n.geopoints, function(x) {
-    return(list(x))
-  })
-  
-  # Get a matrix of distances (in metres)
-  mat.distances = ReplaceLowerOrUpperTriangle(outer(list.geopoints, list.geopoints, GeoDistanceInMetres), "lower")
-  
-  # Set the row and column names
-  rownames(mat.distances) = df.geopoints$name
-  colnames(mat.distances) = df.geopoints$name
-  return(mat.distances)}
-
-snpNeiDist = as.dist(stamppNeisD(fkGenlightPopDepth, pop = TRUE), diag = F)
-coords = read.csv("fkXYcoords.csv", header=TRUE) # tab-separated file for all pops
-dGeo = as.dist(GeoDistanceInMetresMatrix(coords)/1000, diag = T)
-
-# Test IBD
-set.seed(694)
-snpIBD = mantel.randtest(dGeo,snpNeiDist)
-snpIBD
-snpNei =  melt(as.matrix(snpNeiDist), varnames = c("row", "col"), value.name = "nei")
-snpNei = snpNei[snpNei$row != snpNei$col,]
-
-geo = melt(as.matrix(dGeo), varnames = c("row", "col"), value.name = "geo")
-geo = geo[geo$row != geo$col,]
-
-snpMantelDF = data.frame(cbind(snpNei$nei, geo$geo))
-colnames(snpMantelDF) = c("nei", "geo")
-
-snpMantelA = ggplot(data = snpMantelDF, aes(x = geo, y = nei)) +
-  scale_fill_gradientn(colors = paletteer_d("wesanderson::Zissou1")) +
-  stat_density_2d(aes(fill = stat(density)), n = 300, contour = FALSE, geom = "raster") +
-  geom_smooth(method = lm, col = "black", fill = "gray40", fullrange = TRUE) +
-  geom_point(shape = 21, fill = "gray40") +
-  scale_x_continuous(limits = c(0,1000), expand = c(0,0)) +
-  scale_y_continuous(limits = c(0,0.15), breaks = seq(0,0.15, by = 0.05), expand = c(0,0)) +
-  annotate("label", x = 775, y = 0.14325, 
-           label = paste("r = ", round(snpIBD$obs, 3), "; p = ", snpIBD$pvalue), 
-           size = 4, alpha = 0.6) +             
-  labs(x = "Geographic distance (km)", y = expression(paste("Nei's genetic distance (",italic("D"),")"))) +
-  ggtitle("SNP") +
-  theme_bw()
-
-snpMantel = snpMantelA + theme(
-  axis.title.x = element_blank(),
-  axis.text.x = element_text(size = 12, color = "black"),
-  axis.ticks.x = element_line(color = "black"),
-  axis.line.x = element_blank(),
-  axis.title.y = element_text(color = "white"),
-  axis.text.y = element_text(size = 12, color = "black"),
-  axis.ticks.y = element_line(color = "black"),
-  axis.line.y = element_blank(),
-  panel.border = element_rect(size = 1.2, color = "black"),
-  plot.margin = margin(0.2,0.5,0.1,0.1, unit = "cm"),
-  legend.position = "none")
-
-snpMantel
+# # Isolation by distance
+# ReplaceLowerOrUpperTriangle = function(m, triangle.to.replace) {
+#   if (nrow(m) != ncol(m))
+#     stop("Supplied matrix must be square.")
+#   if (tolower(triangle.to.replace) == "lower")
+#     tri = lower.tri(m)
+#   else if (tolower(triangle.to.replace) == "upper")
+#     tri = upper.tri(m)
+#   else
+#     stop("triangle.to.replace must be set to 'lower' or 'upper'.")
+#   m[tri] = t(m)[tri]
+#   return(m)
+# }
+#   # If triangle.to.replace="lower", replaces the lower triangle of a square matrix with its upper triangle.
+#   # If triangle.to.replace="upper", replaces the upper triangle of a square matrix with its lower triangle.
+# 
+# GeoDistanceInMetresMatrix = function(df.geopoints) {
+#   # Returns a matrix (M) of distances between geographic points. M[i,j] = M[j,i] = Distance between (df.geopoints$lat[i], df.geopoints$lon[i]) and (df.geopoints$lat[j], df.geopoints$lon[j]). The row and column names are given by df.geopoints$name.
+#   
+#   GeoDistanceInMetres = function(g1, g2) {
+#     # Returns a vector of distances. (But if g1$index > g2$index, returns zero.) The 1st value in the returned vector is the distance between g1[[1]] and g2[[1]]. The 2nd value in the returned vector is the distance between g1[[2]] and g2[[2]]. Etc. Each g1[[x]] or g2[[x]] must be a list with named elements "index", "lat" and "lon". E.g. g1 = list(list("index"=1, "lat"=12.1, "lon"=10.1), list("index"=3, "lat"=12.1, "lon"=13.2))
+#     
+#     DistM = function(g1, g2) {
+#       require("Imap")
+#       return(ifelse(
+#         g1$index > g2$index,
+#         0,
+#         gdist(lat.1 = g1$lat, lon.1 = g1$lon, lat.2 = g2$lat, lon.2 = g2$lon, units = "m")))
+#     }
+#     return(mapply(DistM, g1, g2))
+#   }
+#   
+#   n.geopoints = nrow(df.geopoints)
+#   
+#   # The index column is used to ensure we only do calculations for the upper triangle of points
+#   df.geopoints$index = 1:n.geopoints
+#   
+#   # Create a list of lists
+#   list.geopoints = by(df.geopoints[, c("index", "lat", "lon")], 1:n.geopoints, function(x) {
+#     return(list(x))
+#   })
+#   
+#   # Get a matrix of distances (in metres)
+#   mat.distances = ReplaceLowerOrUpperTriangle(outer(list.geopoints, list.geopoints, GeoDistanceInMetres), "lower")
+#   
+#   # Set the row and column names
+#   rownames(mat.distances) = df.geopoints$name
+#   colnames(mat.distances) = df.geopoints$name
+#   return(mat.distances)}
+# 
+# snpNeiDist = as.dist(stamppNeisD(fkGenlightPopDepth, pop = TRUE), diag = F)
+# coords = read.csv("fkXYcoords.csv", header=TRUE) # tab-separated file for all pops
+# dGeo = as.dist(GeoDistanceInMetresMatrix(coords)/1000, diag = T)
+# 
+# # Test IBD
+# set.seed(694)
+# snpIBD = mantel.randtest(dGeo,snpNeiDist)
+# snpIBD
+# snpNei =  melt(as.matrix(snpNeiDist), varnames = c("row", "col"), value.name = "nei")
+# snpNei = snpNei[snpNei$row != snpNei$col,]
+# 
+# geo = melt(as.matrix(dGeo), varnames = c("row", "col"), value.name = "geo")
+# geo = geo[geo$row != geo$col,]
+# 
+# snpMantelDF = data.frame(cbind(snpNei$nei, geo$geo))
+# colnames(snpMantelDF) = c("nei", "geo")
+# 
+# snpMantelA = ggplot(data = snpMantelDF, aes(x = geo, y = nei)) +
+#   scale_fill_gradientn(colors = paletteer_d("wesanderson::Zissou1")) +
+#   stat_density_2d(aes(fill = stat(density)), n = 300, contour = FALSE, geom = "raster") +
+#   geom_smooth(method = lm, col = "black", fill = "gray40", fullrange = TRUE) +
+#   geom_point(shape = 21, fill = "gray40") +
+#   scale_x_continuous(limits = c(0,1000), expand = c(0,0)) +
+#   scale_y_continuous(limits = c(0,0.15), breaks = seq(0,0.15, by = 0.05), expand = c(0,0)) +
+#   annotate("label", x = 775, y = 0.14325, 
+#            label = paste("r = ", round(snpIBD$obs, 3), "; p = ", snpIBD$pvalue), 
+#            size = 4, alpha = 0.6) +             
+#   labs(x = "Geographic distance (km)", y = expression(paste("Nei's genetic distance (",italic("D"),")"))) +
+#   ggtitle("SNP") +
+#   theme_bw()
+# 
+# snpMantel = snpMantelA + theme(
+#   axis.title.x = element_blank(),
+#   axis.text.x = element_text(size = 12, color = "black"),
+#   axis.ticks.x = element_line(color = "black"),
+#   axis.line.x = element_blank(),
+#   axis.title.y = element_text(color = "white"),
+#   axis.text.y = element_text(size = 12, color = "black"),
+#   axis.ticks.y = element_line(color = "black"),
+#   axis.line.y = element_blank(),
+#   panel.border = element_rect(size = 1.2, color = "black"),
+#   plot.margin = margin(0.2,0.5,0.1,0.1, unit = "cm"),
+#   legend.position = "none")
+# 
+# snpMantel
 ```
 
 ```{r, bayescanOutliers}
