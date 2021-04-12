@@ -634,57 +634,57 @@ ggsave("../revisedfigures/fig4.eps", plot = combinedAdmix, width = 60, height = 
 
 #Zoox Plot
 
-dfZoox = read.csv("zooxGenomeAlignments.csv")
+#dfZoox = read.csv("zooxGenomeAlignments.csv")
 
-# zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
-# head(zoox)
-# 
-# zoox$V2[is.na(zoox$V2)] <- as.character(zoox$V1[is.na(zoox$V2)])
-# 
-# zoox$V1 = gsub(pattern = "fk.*", "chr", zoox$V1)
-# zoox$V2 = gsub(".trim.*", "", zoox$V2)    
-# 
-# zoox = zoox %>% filter(zoox$V1 != "*")
-# 
-# zooxLst = split(zoox$V2, as.integer(gl(length(zoox$V2), 20, length(zoox$V2))))
-# 
-# zooxMaps = NULL
-# for(i in zooxLst){
-#   zooxMaps = rbind(zooxMaps, data.frame(t(i)))
-# }
-# colnames(zooxMaps) = c("sample",zoox$V1[c(2:20)])
-# 
-# for(i in c(2:20)){
-#   zooxMaps[,i] = as.numeric(levels(zooxMaps[,i]))[zooxMaps[,i]]
-# }
-# 
-# str(zooxMaps)
-# 
-# zooxMaps$Symbiodinium = rowSums(zooxMaps[2:6])
-# zooxMaps$Breviolum = rowSums(zooxMaps[7:10])
-# zooxMaps$Cladcopium = rowSums(zooxMaps[11:16])
-# zooxMaps$Durusdinium = rowSums(zooxMaps[17:20])
-# 
-# zooxMaps = zooxMaps[,c(1, 21:24)]
-# zooxProp = zooxMaps
-# 
-# zooxProp$sum = apply(zooxProp[, c(2:length(zooxProp[1,]))], 1, function(x) {
-# sum(x, na.rm = T)
-# })
-# 
-# zooxProp = cbind(zooxProp[, c(1)], (zooxProp[, c(2:(ncol(zooxProp)-1))]
-# / zooxProp$sum))
-# head(zooxProp)
-# 
-# apply(zooxProp[, c(2:(ncol(zooxProp)))], 1, function(x) {
-# sum(x, na.rm = T)
-# })
-# 
-# dfZoox = cbind("Sample" = zooxProp[,1], "Population" = popData[,2], zooxProp[,c(2:5)])
+zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
+head(zoox)
+
+zoox$V2[is.na(zoox$V2)] <- as.character(zoox$V1[is.na(zoox$V2)])
+
+zoox$V1 = gsub(pattern = "fk.*", "chr", zoox$V1)
+zoox$V2 = gsub(".trim.*", "", zoox$V2)
+
+zoox = zoox %>% filter(zoox$V1 != "*")
+
+zooxLst = split(zoox$V2, as.integer(gl(length(zoox$V2), 20, length(zoox$V2))))
+
+zooxMaps = NULL
+for(i in zooxLst){
+  zooxMaps = rbind(zooxMaps, data.frame(t(i)))
+}
+colnames(zooxMaps) = c("sample",zoox$V1[c(2:20)])
+
+for(i in c(2:20)){
+  zooxMaps[,i] = as.numeric(levels(zooxMaps[,i]))[zooxMaps[,i]]
+}
+
+str(zooxMaps)
+
+zooxMaps$Symbiodinium = rowSums(zooxMaps[2:6])
+zooxMaps$Breviolum = rowSums(zooxMaps[7:10])
+zooxMaps$Cladcopium = rowSums(zooxMaps[11:16])
+zooxMaps$Durusdinium = rowSums(zooxMaps[17:20])
+
+zooxMaps = zooxMaps[,c(1, 21:24)]
+zooxProp = zooxMaps
+
+zooxProp$sum = apply(zooxProp[, c(2:length(zooxProp[1,]))], 1, function(x) {
+sum(x, na.rm = T)
+})
+
+zooxProp = cbind(zooxProp[, c(1)], (zooxProp[, c(2:(ncol(zooxProp)-1))]
+/ zooxProp$sum))
+head(zooxProp)
+
+apply(zooxProp[, c(2:(ncol(zooxProp)))], 1, function(x) {
+sum(x, na.rm = T)
+})
+
+dfZoox = cbind("sample" = zooxProp[,1], "popsite" = popData[,2], zooxProp[,c(2:5)])
 
 dfZoox$popsite=as.factor(dfZoox$popsite)
 dfZoox$popsite = factor(dfZoox$popsite, levels = levels(dfZoox$popsite)[c(6,5,4,3,2,1,8,7)])
-levels(dfZoox$popsite) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+levels(dfZoox$popsite) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 dfZoox = dfZoox[order(dfZoox$popsite),]
 dfZoox$Order = c(1:nrow(dfZoox))
