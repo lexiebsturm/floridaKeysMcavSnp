@@ -461,9 +461,6 @@ ggsave("../revisedFigures/fig3.eps", plot = snpHeatmap, width = 34, height = 15,
 ```
 ## ADMIXTURE Plot
 ```{r, ADMIXTURE}
-# df1 <- read.csv("fkMcavNoClones_k4.csv")
-# admixedSamples=filter(df1, cluster1 < 0.75, cluster2 < 0.75, cluster3 < 0.75, cluster4 < 0.75)
-# count(admixedSamples$pop)
 
 ###Cluster K=2
 colPal2=c("#FFFFCC", "#41B6C4")
@@ -502,10 +499,13 @@ p2 = ggplot(mdat2, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
 p2
 
 ###Cluster K=3
-colPal3=c("#A1DAB4", "#41B6C4", "#225EA8")
+colPal3=c("#FFFFCC", "#41B6C4", "#225EA8")
+#colPal3=c("#A1DAB4", "#41B6C4", "#225EA8")
 fkK3 <- read.csv("fkMcavNoClones_k3.csv")
-fkK3$sample = factor(fkK3$sample, levels = fkK3$sample[order(-fkK3$cluster3)])
+fkK3$sample = factor(fkK3$sample, levels = fkK3$sample[order(-fkK3$cluster2)])
+
 mdat3 = melt(fkK3, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+mdat3$Ancestry = factor(mdat3$Ancestry, levels(mdat3$Ancestry)[c(1,3,2)])
 mdat3$pop=as.factor(mdat3$pop)
 mdat3$pop = factor(mdat3$pop, levels(mdat3$pop)[c(6,5,4,3,2,1,8,7)])
 levels(mdat3$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
@@ -541,21 +541,26 @@ p3
 ###Cluster K=4
 fkK4 <- read.csv("fkMcavNoClones_k4.csv")
 
-cluster2Pops=fkK4 %>% filter(pop=="Upper Keys-Shallow")
-cluster2Pops = cluster2Pops[order(cluster2Pops$pop, -cluster2Pops$cluster2),]
+# cluster2Pops=fkK4 %>% filter(pop=="Upper Keys-Shallow")
+# cluster2Pops = cluster2Pops[order(cluster2Pops$pop, -cluster2Pops$cluster2),]
+# 
+# cluster3Pops=fkK4 %>% filter(pop %in% c("TER-South-Mesophotic", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic"))
+# cluster3Pops = cluster3Pops[order(cluster3Pops$pop, -cluster3Pops$cluster3),]
+# 
+# cluster4Pops=fkK4 %>% filter(pop %in% c("TER-South-Shallow", "Lower Keys-Shallow",  "TER-North-Shallow", "TER-North-Mesophotic"))
+# cluster4Pops = cluster4Pops[order(cluster4Pops$pop, -cluster4Pops$cluster4),]
+# 
+# snpStr = cluster2Pops %>% add_row(cluster3Pops) %>% add_row(cluster4Pops)
+# snpStr$sample <- factor(snpStr$sample, levels= snpStr$sample)
+# mdat4 = melt(snpStr, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
 
-cluster3Pops=fkK4 %>% filter(pop %in% c("TER-South-Mesophotic", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic"))
-cluster3Pops = cluster3Pops[order(cluster3Pops$pop, -cluster3Pops$cluster3),]
 
-cluster4Pops=fkK4 %>% filter(pop %in% c("TER-South-Shallow", "Lower Keys-Shallow",  "TER-North-Shallow", "TER-North-Mesophotic"))
-cluster4Pops = cluster4Pops[order(cluster4Pops$pop, -cluster4Pops$cluster4),]
-
-snpStr = cluster2Pops %>% add_row(cluster3Pops) %>% add_row(cluster4Pops)
-snpStr$sample <- factor(snpStr$sample, levels= snpStr$sample)
-mdat4 = melt(snpStr, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+fkK4$sample = factor(fkK4$sample, levels = fkK4$sample[order(-fkK4$cluster2)])
+mdat4 = melt(fkK4, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+mdat4$Ancestry = factor(mdat4$Ancestry, levels(mdat4$Ancestry)[c(1,3,2,4)])
 mdat4$pop=as.factor(mdat4$pop)
 mdat4$pop = factor(mdat4$pop, levels(mdat4$pop)[c(6,5,4,3,2,1,8,7)])
-levels(mdat4$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+levels(mdat4$pop) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
@@ -585,11 +590,9 @@ p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
 p4
 
 combinedAdmix = (p2 / p3 / p4)
-ggsave("../figures/combinedAdmix.tiff", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
+ggsave("../revisedfigures/combinedAdmix.tiff", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
 
-ggsave("../figures/admixturePlot.tiff", plot = p4, width = 30, height = 15, units = "cm", dpi = 300)
-
-ggsave("../figures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
+ggsave("../revisedfigures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
 ```
 
 ## Zoox and Depth
@@ -631,58 +634,57 @@ ggsave("../figures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, uni
 
 #Zoox Plot
 
-# dfZoox = read.csv("zooxCommunity.csv")
+dfZoox = read.csv("zooxGenomeAlignments.csv")
 
+# zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
+# head(zoox)
+# 
+# zoox$V2[is.na(zoox$V2)] <- as.character(zoox$V1[is.na(zoox$V2)])
+# 
+# zoox$V1 = gsub(pattern = "fk.*", "chr", zoox$V1)
+# zoox$V2 = gsub(".trim.*", "", zoox$V2)    
+# 
+# zoox = zoox %>% filter(zoox$V1 != "*")
+# 
+# zooxLst = split(zoox$V2, as.integer(gl(length(zoox$V2), 20, length(zoox$V2))))
+# 
+# zooxMaps = NULL
+# for(i in zooxLst){
+#   zooxMaps = rbind(zooxMaps, data.frame(t(i)))
+# }
+# colnames(zooxMaps) = c("sample",zoox$V1[c(2:20)])
+# 
+# for(i in c(2:20)){
+#   zooxMaps[,i] = as.numeric(levels(zooxMaps[,i]))[zooxMaps[,i]]
+# }
+# 
+# str(zooxMaps)
+# 
+# zooxMaps$Symbiodinium = rowSums(zooxMaps[2:6])
+# zooxMaps$Breviolum = rowSums(zooxMaps[7:10])
+# zooxMaps$Cladcopium = rowSums(zooxMaps[11:16])
+# zooxMaps$Durusdinium = rowSums(zooxMaps[17:20])
+# 
+# zooxMaps = zooxMaps[,c(1, 21:24)]
+# zooxProp = zooxMaps
+# 
+# zooxProp$sum = apply(zooxProp[, c(2:length(zooxProp[1,]))], 1, function(x) {
+# sum(x, na.rm = T)
+# })
+# 
+# zooxProp = cbind(zooxProp[, c(1)], (zooxProp[, c(2:(ncol(zooxProp)-1))]
+# / zooxProp$sum))
+# head(zooxProp)
+# 
+# apply(zooxProp[, c(2:(ncol(zooxProp)))], 1, function(x) {
+# sum(x, na.rm = T)
+# })
+# 
+# dfZoox = cbind("Sample" = zooxProp[,1], "Population" = popData[,2], zooxProp[,c(2:5)])
 
-zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
-head(zoox)
-
-zoox$V2[is.na(zoox$V2)] <- as.character(zoox$V1[is.na(zoox$V2)])
-
-zoox$V1 = gsub(pattern = "fk.*", "chr", zoox$V1)
-zoox$V2 = gsub(".trim.*", "", zoox$V2)    
-
-zoox = zoox %>% filter(zoox$V1 != "*")
-
-zooxLst = split(zoox$V2, as.integer(gl(length(zoox$V2), 20, length(zoox$V2))))
-
-zooxMaps = NULL
-for(i in zooxLst){
-  zooxMaps = rbind(zooxMaps, data.frame(t(i)))
-}
-colnames(zooxMaps) = c("sample",zoox$V1[c(2:20)])
-
-for(i in c(2:20)){
-  zooxMaps[,i] = as.numeric(levels(zooxMaps[,i]))[zooxMaps[,i]]
-}
-
-str(zooxMaps)
-
-zooxMaps$Symbiodinium = rowSums(zooxMaps[2:6])
-zooxMaps$Breviolum = rowSums(zooxMaps[7:10])
-zooxMaps$Cladcopium = rowSums(zooxMaps[11:16])
-zooxMaps$Durusdinium = rowSums(zooxMaps[17:20])
-
-zooxMaps = zooxMaps[,c(1, 21:24)]
-zooxProp = zooxMaps
-
-zooxProp$sum = apply(zooxProp[, c(2:length(zooxProp[1,]))], 1, function(x) {
-sum(x, na.rm = T)
-})
-
-zooxProp = cbind(zooxProp[, c(1)], (zooxProp[, c(2:(ncol(zooxProp)-1))]
-/ zooxProp$sum))
-head(zooxProp)
-
-apply(zooxProp[, c(2:(ncol(zooxProp)))], 1, function(x) {
-sum(x, na.rm = T)
-})
-
-dfZoox = cbind("Sample" = zooxProp[,1], "Population" = popData[,2], zooxProp[,c(2:5)])
-
-dfZoox$Population=as.factor(dfZoox$Population)
-dfZoox$Population = factor(dfZoox$Population, levels = levels(dfZoox$Population)[c(6,5,4,3,2,1,8,7)])
-levels(dfZoox$Population) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+dfZoox$popsite=as.factor(dfZoox$popsite)
+dfZoox$popsite = factor(dfZoox$popsite, levels = levels(dfZoox$popsite)[c(6,5,4,3,2,1,8,7)])
+levels(dfZoox$popsite) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 dfZoox = dfZoox[order(dfZoox$popsite),]
 dfZoox$Order = c(1:nrow(dfZoox))
@@ -716,6 +718,7 @@ zooxPlot = zooxPlotA + theme(plot.title = element_text(hjust = 0.5),
   legend.position = "right",
   #legend.title = element_blank(),
   legend.text = element_text(face = "italic"))
+
 zooxPlot
 
 ggsave("../revisedFigures/zooxPlot.tiff", plot = zooxPlot, width = 30, height = 15, units = "cm", dpi = 300)
