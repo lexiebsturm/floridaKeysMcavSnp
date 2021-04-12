@@ -233,6 +233,8 @@ mkdir ../zooxSams
 mkdir zooxBamsNoClones
 srun cp ./zooxSams/*.sam ./zooxBamsNoClones
 
+#Remove the host clone files
+
 #Compressing, sorting and indexing the SAM files, so they become BAM files:
 >s2b
 for file in *.sam; do
@@ -242,7 +244,6 @@ done
 launcher_creator.py -j s2b -n s2b -t 1:00:00 -N 5 -e asturm2017@fau.edu -q shortq7
 sbatch s2b.slurm
 
-################################################################################
 FILTERS="-uniqueOnly 1 -remove_bads 1 -minMapQ 20 -minQ 25 -dosnpstat 1 -doHWE 1 -hwe_pval 1e-5 -sb_pval 1e-5 -hetbias_pval 1e-5 -skipTriallelic 1 -minInd 162 -snp_pval 1e-5 -minMaf 0.05"
 
 TODO="-doMajorMinor 1 -doMaf 1 -doCounts 1 -makeMatrix 1 -doIBS 1 -doCov 1 -doGeno 8 -doBcf 1 -doPost 1 -doGlf 2"
@@ -254,6 +255,15 @@ srun angsd -b zooxBamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkZooxNoClones
 # how many SNPs?
 NSITES=`zcat fkZooxNoClones.mafs.gz | wc -l`
 echo $NSITES
+
+#Only 4 sites, not enough to do anything with
+#But can count alignments
+for file in *.bam; do
+
+for i in *.bam; do
+    echo $i >> output
+    samtools idxstats $i | cut -f 1,3 >> output
+done
 ################################################################################
 cd ~/2bRAD/floridaKeys/sams/unmapped
 
