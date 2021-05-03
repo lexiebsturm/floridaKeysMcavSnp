@@ -144,9 +144,10 @@ fknmsMap = ggdraw() +
   draw_plot(lowerKeys, x = 0.25, y = 0.45, width = 0.3, height = 0.3) +
   draw_plot(dryTortugas, x = 0.01, y = 0.6, width = 0.3, height = 0.3)
 
+fknmsMap
 
 ggsave("../revisedFigures/fig1.tiff", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300)
-ggsave("../revisedFigures/fig1.eps", plot=fkMap, height = 20, width = 25, unit = "cm", dpi = 300)
+ggsave("../revisedFigures/fig1.eps", plot=fknmsMap, height = 20, width = 25, unit = "cm", dpi = 300)
 ```
 
 ## Dendrogram with Clones
@@ -225,7 +226,7 @@ cloneDend = cloneDendA + theme(
 
 cloneDend
 
-ggsave("../figuresRevised/cloneDend.tiff", plot = cloneDend, height = 8, width = 30, units = "in", dpi = 300)
+ggsave("../revisedFigures/suppFig2.tiff", plot = cloneDend, height = 8, width = 30, units = "in", dpi = 300)
 ```
 ##Dendrogram no Clones
 ```{r, Dendrogram no Clones, fig.dim = c(13, 4.75)}
@@ -265,28 +266,21 @@ ggsave("../figures/snpDend.tiff", plot = snpDend, height = 4.75, width = 35, uni
 
 ## Heterozygosity
 ```{r, popStats}
-# hetero=read.csv("sampleHeterozygosity.csv")
-# heteroStatAllSites <- ddply(hetero, c("popdepth"), summarise,
-#                N    = length(HeterozygosityAllSites),
-#                mean = mean(HeterozygosityAllSites),
-#                sd   = sd(HeterozygosityAllSites),
-#                se   = sd / sqrt(N))
-# max(heteroStatAllSites$mean, na.rm = TRUE)
-# min(heteroStatAllSites$mean, na.rm = TRUE)
-#
-# heteroVariantSites <- ddply(hetero, c("popdepth"), summarise,
-#                N    = length(HeterozygosityVariantSites),
-#                mean = mean(HeterozygosityVariantSites),
-#                sd   = sd(HeterozygosityVariantSites),
-#                se   = sd / sqrt(N))
-# max(heteroVariantSites$mean, na.rm = TRUE)
-# min(heteroVariantSites$mean, na.rm = TRUE)
-#
-# heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) +
-#   geom_boxplot()+
-#   theme_bw()
-# heteroPlot
-#
+hetero=read.csv("sampleHeterozygosity.csv")
+heteroStatAllSites <- ddply(hetero, c("popdepth"), summarise,
+               N    = length(heterozygosity),
+               mean = mean(heterozygosity),
+               sd   = sd(heterozygosity),
+               se   = sd / sqrt(N))
+max(heteroStatAllSites$mean, na.rm = TRUE)
+min(heteroStatAllSites$mean, na.rm = TRUE)
+
+
+heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) +
+  geom_boxplot()+
+  theme_bw()
+heteroPlot
+
 # my_data <- read.table(file.choose())
 # mean(my_data$V4)
 ```
@@ -354,7 +348,7 @@ fkSnpPcoaPlot = fkSnpPcoaPlotA +
 
 fkSnpPcoaPlot
 
-ggsave("../revisedFigures/fkSnpPcoaPlot.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
+ggsave("../revisedFigures/fig2.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
 ggsave("../revisedFigures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300, device=cairo_ps, fallback_resolution = 600)
 
 ```
@@ -455,7 +449,7 @@ snpHeatmap = snpHeatmapA + theme(
 
 snpHeatmap
 
-ggsave("../revisedFigures/snpHeatMap.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
+ggsave("../revisedFigures/fig3.tiff", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
 
 ggsave("../revisedFigures/fig3.eps", plot = snpHeatmap, width = 34, height = 15, units = "cm", dpi = 300)
 ```
@@ -469,7 +463,7 @@ fkK2$sample = factor(fkK2$sample, levels = fkK2$sample[order(-fkK2$cluster2)])
 mdat2 = melt(fkK2, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
 mdat2$pop=as.factor(mdat2$pop)
 mdat2$pop = factor(mdat2$pop, levels(mdat2$pop)[c(6,5,4,3,2,1,8,7)])
-levels(mdat2$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+levels(mdat2$pop) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 p2 = ggplot(mdat2, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
@@ -482,10 +476,11 @@ p2 = ggplot(mdat2, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   panel.spacing.x=grid:::unit(0, "lines"),
   panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
   axis.text.x=element_blank(),
-  axis.text.y = element_text(size=14),
+  axis.text.y = element_blank(),
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
   axis.ticks.x=element_blank(),
+  axis.ticks.y=element_blank(),
   strip.background=element_blank(),
   strip.text=element_blank(),
   legend.key=element_blank(),
@@ -508,7 +503,7 @@ mdat3 = melt(fkK3, id.vars=c("sample", "pop"), variable.name="Ancestry", value.n
 mdat3$Ancestry = factor(mdat3$Ancestry, levels(mdat3$Ancestry)[c(1,3,2)])
 mdat3$pop=as.factor(mdat3$pop)
 mdat3$pop = factor(mdat3$pop, levels(mdat3$pop)[c(6,5,4,3,2,1,8,7)])
-levels(mdat3$pop) = c("DRTS-Shallow", "DRTS-Mesophotic", "DRTN-Shallow", "DRTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+levels(mdat3$pop) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
 
 p3 = ggplot(mdat3, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
@@ -522,12 +517,13 @@ p3 = ggplot(mdat3, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
   panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
   #axis.text.x=element_text(size=12, angle=90)
   axis.text.x = element_blank(),
-  axis.title.x = element_blank(),
+  axis.title.x = element_text(size=22),
   axis.ticks.x=element_blank(),
-  axis.text.y = element_text(size=14),
-  axis.title.y = element_text(size=22),
+  axis.ticks.y=element_blank(),
+  axis.text.y = element_blank(),
+  axis.title.y = element_blank(),
   strip.background=element_blank(),
-  strip.text=element_blank(),
+  strip.text=element_text(size=20, angle=45),
   legend.key=element_blank(),
   legend.position = "none",
   legend.title = element_blank()) +
@@ -539,60 +535,60 @@ p3 = ggplot(mdat3, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
 p3
 
 ###Cluster K=4
-fkK4 <- read.csv("fkMcavNoClones_k4.csv")
-
-# cluster2Pops=fkK4 %>% filter(pop=="Upper Keys-Shallow")
-# cluster2Pops = cluster2Pops[order(cluster2Pops$pop, -cluster2Pops$cluster2),]
+# fkK4 <- read.csv("fkMcavNoClones_k4.csv")
 # 
-# cluster3Pops=fkK4 %>% filter(pop %in% c("TER-South-Mesophotic", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic"))
-# cluster3Pops = cluster3Pops[order(cluster3Pops$pop, -cluster3Pops$cluster3),]
+# # cluster2Pops=fkK4 %>% filter(pop=="Upper Keys-Shallow")
+# # cluster2Pops = cluster2Pops[order(cluster2Pops$pop, -cluster2Pops$cluster2),]
+# # 
+# # cluster3Pops=fkK4 %>% filter(pop %in% c("TER-South-Mesophotic", "Lower Keys-Mesophotic", "Upper Keys-Mesophotic"))
+# # cluster3Pops = cluster3Pops[order(cluster3Pops$pop, -cluster3Pops$cluster3),]
+# # 
+# # cluster4Pops=fkK4 %>% filter(pop %in% c("TER-South-Shallow", "Lower Keys-Shallow",  "TER-North-Shallow", "TER-North-Mesophotic"))
+# # cluster4Pops = cluster4Pops[order(cluster4Pops$pop, -cluster4Pops$cluster4),]
+# # 
+# # snpStr = cluster2Pops %>% add_row(cluster3Pops) %>% add_row(cluster4Pops)
+# # snpStr$sample <- factor(snpStr$sample, levels= snpStr$sample)
+# # mdat4 = melt(snpStr, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
 # 
-# cluster4Pops=fkK4 %>% filter(pop %in% c("TER-South-Shallow", "Lower Keys-Shallow",  "TER-North-Shallow", "TER-North-Mesophotic"))
-# cluster4Pops = cluster4Pops[order(cluster4Pops$pop, -cluster4Pops$cluster4),]
 # 
-# snpStr = cluster2Pops %>% add_row(cluster3Pops) %>% add_row(cluster4Pops)
-# snpStr$sample <- factor(snpStr$sample, levels= snpStr$sample)
-# mdat4 = melt(snpStr, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+# fkK4$sample = factor(fkK4$sample, levels = fkK4$sample[order(-fkK4$cluster2)])
+# mdat4 = melt(fkK4, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
+# mdat4$Ancestry = factor(mdat4$Ancestry, levels(mdat4$Ancestry)[c(1,3,2,4)])
+# mdat4$pop=as.factor(mdat4$pop)
+# mdat4$pop = factor(mdat4$pop, levels(mdat4$pop)[c(6,5,4,3,2,1,8,7)])
+# levels(mdat4$pop) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
+# 
+# p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
+#   geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
+#   facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
+#   labs(x = "Population", y = "Ancestry") +
+#   ggtitle("K=4") +
+#   theme(plot.title = element_text(size=22),
+#   panel.grid=element_blank(),
+#   panel.background=element_rect(fill=NA, colour="grey25"),
+#   panel.spacing.x=grid:::unit(0, "lines"),
+#   panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
+#   #axis.text.x=element_text(size=12, angle=90)
+#   axis.text.x = element_blank(),
+#   axis.ticks.x=element_blank(),
+#   axis.title.x = element_text(size=22),
+#   axis.text.y = element_text(size=14),
+#   axis.title.y = element_blank(),
+#   strip.background=element_blank(),
+#   strip.text=element_text(size=20, angle=45),
+#   legend.key=element_blank(),
+#   legend.position = "none",
+#   legend.title = element_blank()) +
+#   scale_x_discrete(expand=c(0, 0)) +
+#   scale_y_continuous(expand=c(0, 0)) +
+#   scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
+#   guides(fill=guide_legend(override.aes=list(colour=NULL)))
+# p4
 
+combinedAdmix = (p2 / p3)
+ggsave("../revisedfigures/fig4.tiff", plot = combinedAdmix, width = 60, height = 35, units = "cm", dpi = 300)
 
-fkK4$sample = factor(fkK4$sample, levels = fkK4$sample[order(-fkK4$cluster2)])
-mdat4 = melt(fkK4, id.vars=c("sample", "pop"), variable.name="Ancestry", value.name="Fraction")
-mdat4$Ancestry = factor(mdat4$Ancestry, levels(mdat4$Ancestry)[c(1,3,2,4)])
-mdat4$pop=as.factor(mdat4$pop)
-mdat4$pop = factor(mdat4$pop, levels(mdat4$pop)[c(6,5,4,3,2,1,8,7)])
-levels(mdat4$pop) = c("DTS-Shallow", "DTS-Mesophotic", "DTN-Shallow", "DTN-Mesophotic", "LK-Shallow", "LK-Mesophotic", "UK-Shallow", "UK-Mesophotic")
-
-p4 = ggplot(mdat4, aes(x=sample, y=Fraction, fill=Ancestry, order=sample)) +
-  geom_bar(stat="identity", position="fill", width=1, colour="grey25") +
-  facet_grid(.~pop, scales = "free", switch = "x", space = "free") +
-  labs(x = "Population", y = "Ancestry") +
-  ggtitle("K=4") +
-  theme(plot.title = element_text(size=22),
-  panel.grid=element_blank(),
-  panel.background=element_rect(fill=NA, colour="grey25"),
-  panel.spacing.x=grid:::unit(0, "lines"),
-  panel.border = element_rect(fill=NA,color="black", size=2, linetype="solid"),
-  #axis.text.x=element_text(size=12, angle=90)
-  axis.text.x = element_blank(),
-  axis.ticks.x=element_blank(),
-  axis.title.x = element_text(size=22),
-  axis.text.y = element_text(size=14),
-  axis.title.y = element_blank(),
-  strip.background=element_blank(),
-  strip.text=element_text(size=20, angle=45),
-  legend.key=element_blank(),
-  legend.position = "none",
-  legend.title = element_blank()) +
-  scale_x_discrete(expand=c(0, 0)) +
-  scale_y_continuous(expand=c(0, 0)) +
-  scale_fill_manual(values = brewer.pal(name = "YlGnBu", n = 4), name = "Cluster") +
-  guides(fill=guide_legend(override.aes=list(colour=NULL)))
-p4
-
-combinedAdmix = (p2 / p3 / p4)
-ggsave("../revisedfigures/combinedAdmix.tiff", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
-
-ggsave("../revisedfigures/fig4.eps", plot = combinedAdmix, width = 60, height = 45, units = "cm", dpi = 300)
+ggsave("../revisedfigures/fig4.eps", plot = combinedAdmix, width = 60, height = 35, units = "cm", dpi = 300)
 ```
 
 ## Zoox and Depth
@@ -635,7 +631,7 @@ ggsave("../revisedfigures/fig4.eps", plot = combinedAdmix, width = 60, height = 
 #Zoox Plot
 
 #dfZoox = read.csv("zooxGenomeAlignments.csv")
-
+popData = read.csv("inds2popsNoClonesPopDepth.csv") # Reads in population data for each sample
 zoox = read.delim("zooxAlignmentOutput", header = FALSE, check.names = FALSE)
 head(zoox)
 
@@ -897,23 +893,18 @@ outsByGene
 outsAnno = outsByGene %>% filter(protein != "unknown")
 outsAnno
 
-# df_uniq <- unique(outsAnno$locus)
-# length(df_uniq)
-# df_uniq1 <- unique(outsAnno$gene)
-# length(df_uniq1)
+df_uniq <- unique(outsAnno$locus)
+length(df_uniq)
+df_uniq1 <- unique(outsAnno$gene)
+length(df_uniq1)
 
 write.csv(x=outsAnno, file="annotatedOutliers.csv")
 
 ```
 
-```{r, highlySignifOuts}
-source('plot_R.r')
-
-dat2 = read.table("fkMcav.baye_fst.txt",header=T)
-head(dat2)
-table(dat2[,"qval"]<0.01)
-highOuts=which(dat2[,"qval"]<0.01)
-plot_bayescan("fkMcav.baye_fst.txt",FDR=0.01,add_text=F,size=0.5,highlight=highOuts)
+```{r, goMWU}
+mcavGo=read.table("Mcavernosa_gene2go.tab")
+names(mcavGo)=c("gene", "GO")
 
 genes = read.table("mcav_gene_regions.tab")
 names(genes) = c("chromo","start","end","gene")
@@ -922,45 +913,123 @@ names(genes) = c("chromo","start","end","gene")
 genes$start = genes$start -2000
 genes$end = genes$end +2000
 
-gnames = read.table("mcav_cog.txt", sep = "\t")
-names(gnames) = c("gene", "cog", "protein")
+#gnames = read.table("mcav_cog.txt", sep = "\t")
+#names(gnames) = c("gene", "cog", "protein")
 
-genes = full_join(genes, gnames, by = "gene")
-genes$protein=as.character(genes$protein)
-genes$protein[is.na(genes$protein)]="unknown"
+genes = full_join(genes, mcavGo, by = "gene")
+# genes$GO=as.character(genes$GO)
+# genes$protein[is.na(genes$GO)]="unknown"
 
 #how many annotated genes do we have?
-nrow(genes[genes$protein!="unknown",])
-head(genes)
+# nrow(genes[genes$protein!="unknown",])
+# head(genes)
 
 snpLoci = read.table("fkMcavNoClones.mafs.gz", header = TRUE)
 snpLoci$locus = c(1:nrow(snpLoci))
 
-highOutsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>%
-  filter(locus %in% highOuts) %>%
+snpsByGene = snpLoci %>% dplyr::select(locus, chromo, position) %>%
+  #filter(locus %in% highOuts) %>%
   full_join(., genes, by = "chromo") %>%
-  filter(position>start, position<end)
+  filter(position>start, position<end, !is.na(GO))
 
-highOutsByGene
+snpsByGene$outlier = 0
+for(i in 1:nrow(snpsByGene)){
+  if(snpsByGene$locus[i] %in% outs){
+    snpsByGene$outlier[i] = 1
+    }else{
+      snpsByGene$outlier[i] = 0
+    }
+}
 
-#only show annotated genes
-highOutsAnno = highOutsByGene %>% filter(protein != "unknown")
-highOutsAnno
+snpsByGene$outlier
 
-df_uniq <- unique(highOutsAnno$locus)
-length(df_uniq)
-df_uniq1 <- unique(highOutsAnno$gene)
-length(df_uniq1)
+input=snpsByGene %>% select(gene, outlier)
 
-write.csv(x=highOutsAnno, file="annotedSignificantOutliers.csv")
+write.csv(input, file="input.csv", row.names = FALSE)
+# two columns of comma-separated values: gene id, To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not).
+
+# First, press command-D on mac or ctrl-shift-H in Rstudio and navigate to the directory containing scripts and input files. Then edit, mark and execute the following bits of code, one after another.
+
+
+# Edit these to match your data file names: 
+input="input.csv"
+#input="heats.csv" # two columns of comma-separated values: gene id, continuous measure of significance. To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not).
+goAnnotations="Mcavernosa_gene2go.tab"
+#goAnnotations="amil_defog_iso2go.tab" # two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. If you have multiple lines per gene, use nrify_GOtable.pl prior to running this script.
+goDatabase="go.obo" # download from http://www.geneontology.org/GO.downloads.ontology.shtml
+goDivision="MF" # either MF, or BP, or CC
+source("gomwu.functions.R")
+
+
+# ------------- Calculating stats
+# It might take a few minutes for MF and BP. Do not rerun it if you just want to replot the data with different cutoffs, go straight to gomwuPlot. If you change any of the numeric values below, delete the files that were generated in previos runs first.
+
+gomwuStats(input, goDatabase, goAnnotations, goDivision,
+	perlPath="/usr/bin/perl", # replace with full path to perl executable if it is not in your system's PATH already
+	largest=0.1,  # a GO category will not be considered if it contains more than this fraction of the total number of genes
+	smallest=5,   # a GO category should contain at least this many genes to be considered
+	clusterCutHeight=0.25, # threshold for merging similar (gene-sharing) terms. See README for details.
+#	Alternative="g" # by default the MWU test is two-tailed; specify "g" or "l" of you want to test for "greater" or "less" instead. 
+#Module=TRUE,Alternative="g" # un-remark this if you are analyzing a SIGNED WGCNA module (values: 0 for not in module genes, kME for in-module genes). In the call to gomwuPlot below, specify absValue=0.001 (count number of "good genes" that fall into the module)
+Module=TRUE # un-remark this if you are analyzing an UNSIGNED WGCNA module 
+)
+# do not continue if the printout shows that no GO terms pass 10% FDR.
+# ----------- Plotting results
+
+quartz()
+results=gomwuPlot(input,goAnnotations,goDivision,
+ 	absValue=-log(0.05,10),  # genes with the measure value exceeding this will be counted as "good genes". This setting is for signed log-pvalues. Specify absValue=0.001 if you are doing Fisher's exact test for standard GO enrichment or analyzing a WGCNA module (all non-zero genes = "good genes").
+ #	absValue=1, # un-remark this if you are using log2-fold changes
+ 	level1=0.1, # FDR threshold for plotting. Specify level1=1 to plot all GO categories containing genes exceeding the absValue.
+ 	level2=0.05, # FDR cutoff to print in regular (not italic) font.
+ 	level3=0.01, # FDR cutoff to print in large bold font.
+ 	txtsize=1.2,    # decrease to fit more on one page, or increase (after rescaling the plot so the tree fits the text) for better "word cloud" effect
+ 	treeHeight=0.5, # height of the hierarchical clustering tree
+ #	colors=c("dodgerblue2","firebrick1","skyblue2","lightcoral") # these are default colors, un-remar and change if needed
+ )
+ # manually rescale the plot so the tree matches the text 
+ # if there are too many categories displayed, try make it more stringent with level1=0.05,level2=0.01,level3=0.001.  
+ 
+ # text representation of results, with actual adjusted p-values
+ results[[1]]
+
+
+# ------- extracting representative GOs
+
+# this module chooses GO terms that best represent *independent* groups of significant GO terms
+
+pcut=1e-2 # adjusted pvalue cutoff for representative GO
+hcut=0.9 # height at which cut the GO terms tree to get "independent groups". 
+
+# plotting the GO tree with the cut level (un-remark the next two lines to plot)
+# plot(results[[2]],cex=0.6)
+# abline(h=hcut,col="red")
+
+# cutting
+ct=cutree(results[[2]],h=hcut)
+annots=c();ci=1
+for (ci in unique(ct)) {
+  message(ci)
+	rn=names(ct)[ct==ci]
+	obs=grep("obsolete",rn)
+	if(length(obs)>0) { rn=rn[-obs] }
+	if (length(rn)==0) {next}
+	rr=results[[1]][rn,]
+	bestrr=rr[which(rr$pval==min(rr$pval)),]
+	best=1
+	if(nrow(bestrr)>1) {
+		nns=sub(" .+","",row.names(bestrr))
+		fr=c()
+		for (i in 1:length(nns)) { fr=c(fr,eval(parse(text=nns[i]))) }
+		best=which(fr==max(fr))
+	}
+	if (bestrr$pval[best]<=pcut) { annots=c(annots,sub("\\d+\\/\\d+ ","",row.names(bestrr)[best]))}
+}
+
+mwus=read.table(paste("MWU",goDivision,input,sep="_"),header=T)
+bestGOs=mwus[mwus$name %in% annots,]
+bestGOs
+
 ```
 
-```{r, DepthOutliers}
-source('plot_R.r')
 
-dat3 = read.table("fkMcav.baye_fstAbsDepth.txt",header=T)
-head(dat3)
-table(dat3[,"PEP_g"]<0.1)
-depthOuts=which(dat3[,"PEP_g"]<0.1)
-plot_bayescan("fkMcav.baye_fstAbsDepth.txt",FDR=0.1,add_text=F,size=0.5,highlight=depthOuts)
-```

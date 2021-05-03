@@ -377,8 +377,11 @@ do
 srun ~/bin/evalAdmix/evalAdmix -beagle fkMcavNoClones.beagle.gz -fname fkMcavNoClones_k${K}.fopt.gz -qname fkMcavNoClones_k${K}.qopt -o fkMcavNoClones_k${K}_residuals -P 20
 done
 
+mkdir ngsAdmixKselect
+srun cp *.beagle.gz ./ngsAdmixKselect
+cd ngsAdmixKselect
 
-## Next, take the likelihood value from each run of NGSadmix and put them into a file that can be used with Clumpak to calculate the most likely K using the methods of Evanno et al. (2005).
+## Next, run NGSadmix ten iterations for each K take the likelihood value from each run of NGSadmix and put them into a file that can be used with Clumpak to calculate the most likely K using the methods of Evanno et al. (2005).
 >ngsAdmix
 for R in {1..10}; do
 for K in {1..11}; do
@@ -386,9 +389,11 @@ echo "NGSadmix -likes fkMcavNoClones.beagle.gz -K $K -P 10 -o fkMcavNoClones_k${
 done;
 done
 
+
 launcher_creator.py -j ngsAdmix -n ngsAdmix -q shortq7 -N 3 -t 06:00:00
 
-sbatch ngsAdmix
+sbatch ngsAdmix.slurm
+
 
 > logfile
 for log in *.log; do
@@ -400,16 +405,43 @@ R
 # you are now using R in the terminal
 logs <- as.data.frame(read.table("logfile"))
 
-logs$K <- c(rep("10", 10), rep("11", 10), rep("1", 10), rep("2", 10), rep("3", 10), rep("4", 10), rep("5", 10), rep("6", 10), rep("7", 10), rep("8", 10), rep("9", 10))
+logs$K <- c(rep("10",10),rep("11",10),rep("1",10),rep("2",10),rep("3",10),rep("4",10),rep("5",10),rep("6", 10),rep("7",10),rep("8",10),rep("9",10))
 
 write.table(logs[, c(2, 1)], "logfile_formatted", row.names = F, col.names = F, quote = F)      
 quit()
+
+#Save and upload to Clumpak
+
+mkdir structureSelector
+
+srun cp *.qopt ./structureSelector #Copy all your ngsadmix runs to a directory
+rename .qopt .Q *.qopt
+
+#Download this directory and zip it, upload along with a popMap to structureSelector to run the Puechamille method
 ################################################################################
 
+#Calculating population parameters no filter on excess heterozygosity
+# estimating site frequency likelihoods for each population, also saving allele frequencies (for genome scan)
 
+mkdir angsdPopStats
 
+srun cp ./mcavBamsNoClones/*bam* ./angsdPopStats #copy over all the bam files (clones removed) and the bam lists for each pop. Pop definitions are below
 
+FILTERS="-uniqueOnly 1 -remove_bads 1  -skipTriallelic 1 -minMapQ 20 -minQ 25 -doHWE 1 -sb_pval 1e-5 -hetbias_pval 1e-5 -minInd 162" #Note there are no MAF or snp filters so as not to affect allelic frequencies that may mess with heterozygosity calcs
 
+TODO="-doMajorMinor 1 -doMaf 1 -dosnpstat 1 -doPost 2 -doGeno 11 -doGlf 2"
+
+srun angsd -b bamsNoClones -GL 1 $FILTERS $TODO -P 1 -out fkMcavNoSNPFilter
+
+NSITES=`zcat fkMcavNoSNPFilter.mafs.gz | wc -l`
+echo $NSITES
+
+srun --mem=100GB Rscript ~/bin/heterozygosity_beagle.R fkMcavNoSNPFilter.beagle.gz
+#Prints individual heterozygosity
+
+echo '#!/bin/bash' > RHet.sh
+echo 'Rscript ~/bin/heterozygosity_beagle.R fkMcavNoSNPFilter.beagle.gz' >> RHet.sh
+sbatch -e RHet.e%j -o RHet.o%j --mem=200GB --mail-user asturm2017@fau.edu --mail-type=ALL RHet.sh
 
 
 
