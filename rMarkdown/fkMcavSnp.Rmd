@@ -50,11 +50,11 @@ pacman::p_load("adegenet", "cowplot", "dendextend", "flextable", "gdata", "ggden
 
 fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA") %>% droplevels()
 
- fkSites = read.csv("sample-sites.csv", header=TRUE)
- levels(fkSites$General.Site)
- fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys"))
+fkSites = read.csv("sample-sites.csv", header=TRUE)
+levels(fkSites$General.Site)
+fkSites$General.Site <- factor(fkSites$General.Site, levels = c("Lower-Keys", "TER-North",  "TER-South", "Upper-Keys"))
 
- baseMap <- get_stamenmap(bbox = c(left = -83,
+baseMap <- get_stamenmap(bbox = c(left = -83,
                                  bottom = 24,
                                  right = -80,
                                  top = 26),
@@ -62,7 +62,7 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
                         crop = FALSE,
                         zoom = 10)
 
- fkMap=ggmap(baseMap)+
+fkMap=ggmap(baseMap)+
   geom_polypath(data = fknmsshpfile, aes(x = long, y = lat, group = location), color="dark red", alpha=.2, size=.2) +
    geom_point(data = fkSites, size = 3, aes(x = Lon, y = Lat, fill=General.Site, shape=Depth.Zone)) +
    scale_fill_paletteer_d("LaCroixColoR::PassionFruit", name= "Population", breaks=c("TER-South","TER-North","Lower-Keys", "Upper-Keys"), labels = c("DTS", "DTN", "LK", "UK"))+ scale_shape_manual(values = c(21,25), name = "Depth Zone", breaks=c("Shallow", "Mesophotic")) + # define shape/color scales
@@ -76,10 +76,13 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
          axis.title.y = element_blank(),
          plot.background = element_blank())
 
- mainMap = fkMap +
+mainMap = fkMap +
       geom_rect(aes(xmin = -83.25, xmax = -82.95, ymin = 24.45, ymax = 24.75), color = "black", fill = NA, size = 0.4) +
       geom_rect(aes(xmin = -80.35, xmax = -80.15, ymin = 25.1, ymax = 25.3), color = "black", fill = NA, size = 0.4) +
       geom_rect(aes(xmin = -81.7, xmax = -81.5, ymin = 24.45, ymax = 24.65), color = "black", fill = NA, size = 0.4) +
+   annotate(geom = "text", x = -83.22, y = 24.72, label = "A", size = 4) +
+   annotate(geom = "text", x = -81.67, y = 24.62, label = "B", size = 4) +
+   annotate(geom = "text", x = -80.32, y = 25.27, label = "C", size = 4) +
    ggsn::scalebar(x.min = -83,
                   y.min = 24,
                   x.max = -80,
@@ -90,10 +93,11 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
                 annotation_north_arrow(location= "topright", height = unit(1, "cm"),
                 width = unit(0.75, "cm"), style = north_arrow_orienteering)
 
- upperKeys = fkMap +
+upperKeys = fkMap +
   coord_sf(xlim = c(-80.35, -80.15), ylim = c(25.1, 25.3)) +
   scale_x_continuous(breaks = c(seq(-80.4, -80.0, by = .1))) +
   scale_y_continuous(breaks = c(seq(25.0, 25.3, by = .1))) +
+  annotate(geom = "text", x = -80.34, y = 25.29, label = "C", size = 8) +
    ggsn::scalebar(x.min = -80.35,
                   y.min = 25.105,
                   x.max = -80.16,
@@ -104,12 +108,14 @@ fknmsshpfile <- read.csv("fknmsSPA.csv", header = TRUE) %>% filter(type != "SPA"
    theme(legend.position = "none",
          axis.title = element_blank(),
          axis.text = element_blank(),
-         axis.ticks = element_blank())
+         axis.ticks = element_blank(),
+         panel.border = element_rect(size = 1))
 
 lowerKeys = fkMap +
   coord_sf(xlim = c(-81.7, -81.5), ylim = c(24.45, 24.65)) +
   scale_x_continuous(breaks = c(seq(-81.7, -81.3, by = .1))) +
   scale_y_continuous(breaks = c(seq(24.4, 24.7, by = .1))) +
+  annotate(geom = "text", x = -81.69, y = 24.64, label = "B", size = 8) +
   ggsn::scalebar(x.min = -81.7,
                   y.min = 24.455,
                   x.max = -81.51,
@@ -120,12 +126,14 @@ lowerKeys = fkMap +
    theme(legend.position = "none",
          axis.title = element_blank(),
          axis.text = element_blank(),
-         axis.ticks = element_blank())
+         axis.ticks = element_blank(),
+         panel.border = element_rect(size = 1))
 
 dryTortugas = fkMap +
   coord_sf(xlim = c(-83.25, -82.95), ylim = c(24.45, 24.75)) +
   scale_x_continuous(breaks = c(seq(-83.2, -82.9, by = .1))) +
-  scale_y_continuous(breaks = c(seq(24.4, 24.7, by = .1))) +  
+  scale_y_continuous(breaks = c(seq(24.4, 24.7, by = .1))) +
+  annotate(geom = "text", x = -83.24, y = 24.74, label = "A", size = 8) +
   ggsn::scalebar(x.min = -83.25,
                   y.min = 24.455,
                   x.max = -82.96,
@@ -136,7 +144,8 @@ dryTortugas = fkMap +
    theme(legend.position = "none",
          axis.title = element_blank(),
          axis.text = element_blank(),
-         axis.ticks = element_blank())
+         axis.ticks = element_blank(),
+         panel.border = element_rect(size = 1))
 
 fknmsMap = ggdraw() +
   draw_plot(mainMap) +
@@ -147,7 +156,7 @@ fknmsMap = ggdraw() +
 fknmsMap
 
 ggsave("../revisedFigures/fig1.tiff", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300)
-ggsave("../revisedFigures/fig1.eps", plot=fknmsMap, height = 20, width = 25, unit = "cm", dpi = 300)
+ggsave("../revisedFigures/fig1.pdf", plot=fknmsMap, height = 20, width = 30, unit = "cm", dpi = 300)
 ```
 
 ## Dendrogram with Clones
@@ -276,7 +285,7 @@ max(heteroStatAllSites$mean, na.rm = TRUE)
 min(heteroStatAllSites$mean, na.rm = TRUE)
 
 
-heteroPlot <- ggplot(hetero, aes(x=popdepth, y=HeterozygosityAllSites)) +
+heteroPlot <- ggplot(hetero, aes(x=popdepth, y=heterozygosity)) +
   geom_boxplot()+
   theme_bw()
 heteroPlot
@@ -349,7 +358,8 @@ fkSnpPcoaPlot = fkSnpPcoaPlotA +
 fkSnpPcoaPlot
 
 ggsave("../revisedFigures/fig2.tiff", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
-ggsave("../revisedFigures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300, device=cairo_ps, fallback_resolution = 600)
+ggsave("../revisedFigures/fig2.pdf", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300)
+# ggsave("../revisedFigures/fig2.eps", plot = fkSnpPcoaPlot, height = 5, width = 7, units = "in", dpi = 300, device=cairo_ps, fallback_resolution = 600)
 
 ```
 
@@ -945,7 +955,7 @@ snpsByGene$outlier
 
 input=snpsByGene %>% select(gene, outlier)
 
-write.csv(input, file="input.csv", row.names = FALSE)
+write.csv(input, file="input.csv", row.names = FALSE, quote = FALSE)
 # two columns of comma-separated values: gene id, To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not).
 
 # First, press command-D on mac or ctrl-shift-H in Rstudio and navigate to the directory containing scripts and input files. Then edit, mark and execute the following bits of code, one after another.
@@ -975,60 +985,60 @@ Module=TRUE # un-remark this if you are analyzing an UNSIGNED WGCNA module
 )
 # do not continue if the printout shows that no GO terms pass 10% FDR.
 # ----------- Plotting results
-
-quartz()
-results=gomwuPlot(input,goAnnotations,goDivision,
- 	absValue=-log(0.05,10),  # genes with the measure value exceeding this will be counted as "good genes". This setting is for signed log-pvalues. Specify absValue=0.001 if you are doing Fisher's exact test for standard GO enrichment or analyzing a WGCNA module (all non-zero genes = "good genes").
- #	absValue=1, # un-remark this if you are using log2-fold changes
- 	level1=0.1, # FDR threshold for plotting. Specify level1=1 to plot all GO categories containing genes exceeding the absValue.
- 	level2=0.05, # FDR cutoff to print in regular (not italic) font.
- 	level3=0.01, # FDR cutoff to print in large bold font.
- 	txtsize=1.2,    # decrease to fit more on one page, or increase (after rescaling the plot so the tree fits the text) for better "word cloud" effect
- 	treeHeight=0.5, # height of the hierarchical clustering tree
- #	colors=c("dodgerblue2","firebrick1","skyblue2","lightcoral") # these are default colors, un-remar and change if needed
- )
- # manually rescale the plot so the tree matches the text 
- # if there are too many categories displayed, try make it more stringent with level1=0.05,level2=0.01,level3=0.001.  
- 
- # text representation of results, with actual adjusted p-values
- results[[1]]
-
-
-# ------- extracting representative GOs
-
-# this module chooses GO terms that best represent *independent* groups of significant GO terms
-
-pcut=1e-2 # adjusted pvalue cutoff for representative GO
-hcut=0.9 # height at which cut the GO terms tree to get "independent groups". 
-
-# plotting the GO tree with the cut level (un-remark the next two lines to plot)
-# plot(results[[2]],cex=0.6)
-# abline(h=hcut,col="red")
-
-# cutting
-ct=cutree(results[[2]],h=hcut)
-annots=c();ci=1
-for (ci in unique(ct)) {
-  message(ci)
-	rn=names(ct)[ct==ci]
-	obs=grep("obsolete",rn)
-	if(length(obs)>0) { rn=rn[-obs] }
-	if (length(rn)==0) {next}
-	rr=results[[1]][rn,]
-	bestrr=rr[which(rr$pval==min(rr$pval)),]
-	best=1
-	if(nrow(bestrr)>1) {
-		nns=sub(" .+","",row.names(bestrr))
-		fr=c()
-		for (i in 1:length(nns)) { fr=c(fr,eval(parse(text=nns[i]))) }
-		best=which(fr==max(fr))
-	}
-	if (bestrr$pval[best]<=pcut) { annots=c(annots,sub("\\d+\\/\\d+ ","",row.names(bestrr)[best]))}
-}
-
-mwus=read.table(paste("MWU",goDivision,input,sep="_"),header=T)
-bestGOs=mwus[mwus$name %in% annots,]
-bestGOs
+# 
+# quartz()
+# results=gomwuPlot(input,goAnnotations,goDivision,
+#  	absValue=-log(0.05,10),  # genes with the measure value exceeding this will be counted as "good genes". This setting is for signed log-pvalues. Specify absValue=0.001 if you are doing Fisher's exact test for standard GO enrichment or analyzing a WGCNA module (all non-zero genes = "good genes").
+#  #	absValue=1, # un-remark this if you are using log2-fold changes
+#  	level1=0.1, # FDR threshold for plotting. Specify level1=1 to plot all GO categories containing genes exceeding the absValue.
+#  	level2=0.05, # FDR cutoff to print in regular (not italic) font.
+#  	level3=0.01, # FDR cutoff to print in large bold font.
+#  	txtsize=1.2,    # decrease to fit more on one page, or increase (after rescaling the plot so the tree fits the text) for better "word cloud" effect
+#  	treeHeight=0.5, # height of the hierarchical clustering tree
+#  #	colors=c("dodgerblue2","firebrick1","skyblue2","lightcoral") # these are default colors, un-remar and change if needed
+#  )
+#  # manually rescale the plot so the tree matches the text 
+#  # if there are too many categories displayed, try make it more stringent with level1=0.05,level2=0.01,level3=0.001.  
+#  
+#  # text representation of results, with actual adjusted p-values
+#  results[[1]]
+# 
+# 
+# # ------- extracting representative GOs
+# 
+# # this module chooses GO terms that best represent *independent* groups of significant GO terms
+# 
+# pcut=1e-2 # adjusted pvalue cutoff for representative GO
+# hcut=0.9 # height at which cut the GO terms tree to get "independent groups". 
+# 
+# # plotting the GO tree with the cut level (un-remark the next two lines to plot)
+# # plot(results[[2]],cex=0.6)
+# # abline(h=hcut,col="red")
+# 
+# # cutting
+# ct=cutree(results[[2]],h=hcut)
+# annots=c();ci=1
+# for (ci in unique(ct)) {
+#   message(ci)
+# 	rn=names(ct)[ct==ci]
+# 	obs=grep("obsolete",rn)
+# 	if(length(obs)>0) { rn=rn[-obs] }
+# 	if (length(rn)==0) {next}
+# 	rr=results[[1]][rn,]
+# 	bestrr=rr[which(rr$pval==min(rr$pval)),]
+# 	best=1
+# 	if(nrow(bestrr)>1) {
+# 		nns=sub(" .+","",row.names(bestrr))
+# 		fr=c()
+# 		for (i in 1:length(nns)) { fr=c(fr,eval(parse(text=nns[i]))) }
+# 		best=which(fr==max(fr))
+# 	}
+# 	if (bestrr$pval[best]<=pcut) { annots=c(annots,sub("\\d+\\/\\d+ ","",row.names(bestrr)[best]))}
+# }
+# 
+# mwus=read.table(paste("MWU",goDivision,input,sep="_"),header=T)
+# bestGOs=mwus[mwus$name %in% annots,]
+# bestGOs
 
 ```
 
